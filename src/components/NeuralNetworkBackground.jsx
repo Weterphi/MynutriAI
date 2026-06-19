@@ -87,6 +87,16 @@ export default function NeuralNetworkBackground() {
     };
   }, []);
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <canvas
       ref={canvasRef}
@@ -98,8 +108,8 @@ export default function NeuralNetworkBackground() {
         height: '100vh',
         zIndex: -5,
         pointerEvents: 'none',
-        WebkitMaskImage: 'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) calc(50vw - 320px), rgba(0,0,0,0) calc(50vw - 250px), rgba(0,0,0,0) calc(50vw + 250px), rgba(0,0,0,1) calc(50vw + 320px), rgba(0,0,0,1) 100%)',
-        maskImage: 'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) calc(50vw - 320px), rgba(0,0,0,0) calc(50vw - 250px), rgba(0,0,0,0) calc(50vw + 250px), rgba(0,0,0,1) calc(50vw + 320px), rgba(0,0,0,1) 100%)'
+        WebkitMaskImage: isMobile ? 'none' : 'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) calc(50vw - 320px), rgba(0,0,0,0) calc(50vw - 250px), rgba(0,0,0,0) calc(50vw + 250px), rgba(0,0,0,1) calc(50vw + 320px), rgba(0,0,0,1) 100%)',
+        maskImage: isMobile ? 'none' : 'linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) calc(50vw - 320px), rgba(0,0,0,0) calc(50vw - 250px), rgba(0,0,0,0) calc(50vw + 250px), rgba(0,0,0,1) calc(50vw + 320px), rgba(0,0,0,1) 100%)'
       }}
     />
   );

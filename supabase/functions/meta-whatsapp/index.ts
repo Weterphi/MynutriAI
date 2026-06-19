@@ -23,36 +23,72 @@ serve(async (req) => {
 
     const apiUrl = `https://graph.facebook.com/v19.0/${META_PHONE_NUMBER_ID}/messages`
 
-    // Helper per inviare un messaggio WhatsApp singolo
-    const sendWhatsApp = async (toPhone: string, textBody: string) => {
-      const cleanPhone = toPhone?.replace(/[\+\s]/g, '')
-      if (!cleanPhone) return { success: false, error: 'No phone' }
-
+    // Helper generico per inviare payload a Meta API
+    const sendWhatsAppPayload = async (payload: any) => {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${META_ACCESS_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: cleanPhone,
-          type: 'text',
-          text: { body: textBody }
-        })
+        body: JSON.stringify(payload)
       });
       const data = await response.json();
       return { success: response.ok, data };
     }
 
-    // 1. Invio messaggio di Benvenuto
+    // Helper per inviare un messaggio WhatsApp singolo testuale (usato dal Cron)
+    const sendWhatsApp = async (toPhone: string, textBody: string) => {
+      const cleanPhone = toPhone?.replace(/[\+\s]/g, '')
+      if (!cleanPhone) return { success: false, error: 'No phone' }
+      return await sendWhatsAppPayload({
+        messaging_product: 'whatsapp',
+        to: cleanPhone,
+        type: 'text',
+        text: { body: textBody }
+      });
+    }
+
+    // 1. Invio messaggio di Benvenuto tramite TEMPLATE
     if (action === 'send_welcome') {
       const cleanPhone = phone?.replace(/[\+\s]/g, '')
       if (!cleanPhone) throw new Error("Phone number is required.")
 
-      const bodyText = `Benvenuto/a in NutriAI, ${name || 'Amico'}! 🍏✨\n\nSiamo entusiasti di averti a bordo. Il tuo percorso verso il benessere inizia da qui!\n\nIl tuo piano alimentare iper-personalizzato è stato generato con successo ed è già disponibile all'interno della tua dashboard personale. Lì potrai consultarlo in ogni dettaglio e scaricare la versione PDF completa.\n\nDa domani, il tuo assistente NutriAI ti invierà automaticamente i promemoria dei pasti all'orario che hai scelto, per supportarti ogni giorno nel raggiungere i tuoi obiettivi.\n\nSiamo pronti per iniziare, buon percorso! 💪`
+      // Costruiamo il payload per il Template WhatsApp con PDF allegato
+      const templatePayload = {
+        messaging_product: "whatsapp",
+        to: cleanPhone,
+        type: "template",
+        template: {
+          name: "dieta_pronta_pdf",
+          language: { code: "it" },
+          components: [
+            {
+              type: "header",
+              parameters: [
+                {
+                  type: "document",
+                  document: {
+                    link: pdfUrl,
+                    filename: "Piano_Alimentare_MynutriAI.pdf"
+                  }
+                }
+              ]
+            },
+            {
+              type: "body",
+              parameters: [
+                {
+                  type: "text",
+                  text: name || "Amico"
+                }
+              ]
+            }
+          ]
+        }
+      };
       
-      const result = await sendWhatsApp(cleanPhone, bodyText);
+      const result = await sendWhatsAppPayload(templatePayload);
       if (!result.success) throw new Error(`Meta API error: ${JSON.stringify(result.data)}`);
       
       return new Response(JSON.stringify({ success: true, meta_response: result.data }), {
@@ -176,11 +212,32 @@ serve(async (req) => {
           const phraseIndex = Math.min(Math.max(currentDayNumber - 1, 0), 29);
           const dailyPhrase = motivationalPhrases[phraseIndex];
 
-          const messageBody = `Buongiorno ${userName}! ☀️\n\n${dailyPhrase}\n\nOggi è il *Giorno ${currentDayNumber}* su 30 del tuo percorso alimentare (${todayMenu.day_name}). Ecco il tuo menu per oggi:\n\n${mealsSummaryText}\n\nTi auguriamo una splendida giornata, ricca di energia e di grandi soddisfazioni! 😊`;
+          // Template per i messaggi giornalieri (sostituisce il testo libero)
+          const dailyTemplatePayload = {
+            messaging_product: "whatsapp",
+            to: phoneNumber.replace(/[\+\s]/g, ''),
+            type: "template",
+            template: {
+              name: "menu_del_giorno",
+              language: { code: "it" },
+              components: [
+                {
+                  type: "body",
+                  parameters: [
+                    { type: "text", text: userName },
+                    { type: "text", text: dailyPhrase },
+                    { type: "text", text: currentDayNumber.toString() },
+                    { type: "text", text: todayMenu.day_name },
+                    { type: "text", text: mealsSummaryText }
+                  ]
+                }
+              ]
+            }
+          };
 
-          console.log(`Inviando WhatsApp a ${userName} (Giorno ${currentDayNumber}) al numero ${phoneNumber}`);
+          console.log(`Inviando WhatsApp a ${userName} (Giorno ${currentDayNumber}) al numero ${phoneNumber} tramite Template`);
 
-          const result = await sendWhatsApp(phoneNumber, messageBody);
+          const result = await sendWhatsAppPayload(dailyTemplatePayload);
 
           results.push({ 
             userId: plan.user_id, 
