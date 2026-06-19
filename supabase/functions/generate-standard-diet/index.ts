@@ -128,7 +128,7 @@ Struttura di ogni elemento:
 [
   {
     "day_number": 1,
-    "day_name": "Lunedì",
+    "day_name": "Giorno 1",
     "week": 1,
     "meals": [
 ${(mealsPerDay === 3) ? `        {"name": "Colazione", "food": "<descrizione con grammi>"},

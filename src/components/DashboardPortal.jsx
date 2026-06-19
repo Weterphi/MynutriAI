@@ -22,7 +22,7 @@ export default function DashboardPortal({
 }) {
   const [activeView, setActiveView] = useState('diet'); // 'diet' | 'store' | 'profile'
   const [activeWeek, setActiveWeek] = useState('week1'); 
-  const [activeDay, setActiveDay] = useState('Lunedì');
+  const [activeDay, setActiveDay] = useState('Giorno 1');
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -222,9 +222,7 @@ export default function DashboardPortal({
       setIsGeneratingFinal(false);
     }
   };
-
-  const days = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
-
+  const days = ['Giorno 1', 'Giorno 2', 'Giorno 3', 'Giorno 4', 'Giorno 5', 'Giorno 6', 'Giorno 7'];
   useEffect(() => {
     if (cachedUserData !== undefined || cachedUserPrefs !== undefined) {
       setIsLoading(false);
@@ -259,7 +257,9 @@ export default function DashboardPortal({
   const getActiveMeals = () => {
     if (!cachedDiet || !Array.isArray(cachedDiet)) return [];
     const weekNum = Number(activeWeek.replace('week', ''));
-    const dayItem = cachedDiet.find(d => d.week === weekNum && d.day_name === activeDay);
+    const dayIndex = days.indexOf(activeDay);
+    const targetDayNumber = (weekNum - 1) * 7 + dayIndex + 1;
+    const dayItem = cachedDiet.find(d => d.day_number === targetDayNumber);
     return dayItem ? dayItem.meals : [];
   };
 
@@ -575,7 +575,7 @@ export default function DashboardPortal({
                   cursor: 'pointer', whiteSpace: 'nowrap', flex: '1', textAlign: 'center', transition: 'all 0.2s ease'
                 }}
               >
-                {day.substring(0, 3)}
+                {day.replace('Giorno ', 'G. ')}
               </button>
             ))}
           </div>

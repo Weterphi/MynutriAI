@@ -65,7 +65,7 @@ function buildMockPlan() {
 
   return Array.from({ length: 30 }, (_, i) => ({
     day_number: i + 1,
-    day_name: days[i % 7],
+    day_name: `Giorno ${i + 1}`,
     week: Math.ceil((i + 1) / 7),
     meals: [
       { name: "Colazione", food: colazioni[i % colazioni.length] },
@@ -286,7 +286,7 @@ Struttura di ogni elemento:
 [
   {
     "day_number": 1,
-    "day_name": "Lunedì",
+    "day_name": "Giorno 1",
     "week": 1,
     "meals": [
 ${mealsExample}
