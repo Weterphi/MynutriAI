@@ -9,13 +9,17 @@ export async function generateAndUploadPdf(userId, userName, userPrefs, dietPlan
 
   console.log("Avvio generazione PDF silente per l'upload...");
 
-  // Crea un elemento DOM temporaneo posizionato fuori dallo schermo
   const tempDiv = document.createElement('div');
   tempDiv.className = 'pdf-document is-printing';
+  // Posizionalo fuori dallo schermo in modo sicuro per html2canvas
   tempDiv.style.position = 'absolute';
-  tempDiv.style.left = '-9999px';
-  tempDiv.style.top = '-9999px';
-  tempDiv.style.width = '800px'; // per una larghezza di rendering stabile
+  tempDiv.style.top = '0';
+  tempDiv.style.left = '0';
+  tempDiv.style.width = '800px';
+  tempDiv.style.zIndex = '-9999';
+  tempDiv.style.backgroundColor = '#ffffff';
+  tempDiv.style.fontFamily = "'Inter', system-ui, sans-serif";
+  tempDiv.style.color = '#000000';
   
   // Calcola gli orari dei pasti come nel componente visualizzatore
   const getMealTime = (mealName) => {
@@ -96,10 +100,16 @@ export async function generateAndUploadPdf(userId, userName, userPrefs, dietPlan
   document.body.appendChild(tempDiv);
 
   const opt = {
-    margin:       10,
+    margin:       [10, 10, 10, 10],
     filename:     `dieta_${userId}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true },
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true,
+      windowWidth: 800,
+      scrollY: 0,
+      scrollX: 0
+    },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
