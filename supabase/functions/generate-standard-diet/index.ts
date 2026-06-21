@@ -80,8 +80,10 @@ Deno.serve(async (req) => {
       }
 
       let gastronomicInstructions = "";
+      let gastronomicStrictRule = "";
       if (gastronomicCountries) {
-        gastronomicInstructions = `\n=== INTEGRAZIONE GASTRONOMICA INTERNAZIONALE ===\nL'utente ha esplicitamente richiesto l'integrazione di piatti gastronomici tipici dei seguenti paesi: ${gastronomicCountries}.\nDEVI assolutamente integrare 1 o 2 piatti tipici per ciascun paese selezionato nel piano alimentare.\nIMPORTANTE: Le ricette devono mantenere il gusto e il nome autentico del paese (es. "Ramen", "Tacos", "Moussaka"), ma devono essere rigorosamente bilanciate e modificate per rispettare gli obiettivi nutrizionali, le intolleranze, e gli alimenti esclusi. Applica la massima precisione e accuratezza culturale.`;
+        gastronomicInstructions = `\n- PAESI GASTRONOMICI RICHIESTI: ${gastronomicCountries}.`;
+        gastronomicStrictRule = `\n9. TRADIZIONI CULINARIE OBBLIGATORIE: L'utente ha selezionato questi paesi: ${gastronomicCountries}. DEVI INSERIRE ALMENO UN PIATTO TIPICO DI QUESTI PAESI (es. Ramen, Tacos, Sushi bilanciato, Curry, ecc.) IN ALMENO 3-4 GIORNI ALLA SETTIMANA. I nomi dei piatti devono richiamare la nazione (es. "Pollo al Curry Indiano", "Tacos Messicani Fit"). SE IGNORI QUESTA REGOLA L'UTENTE SARÀ MOLTO DELUSO.`;
       }
 
       let systemRole = `Sei un medico nutrizionista clinico di altissimo livello con 20 anni di esperienza ospedaliera. Il tuo obiettivo è creare una dieta di 30 giorni perfettamente calibrata, salutare e che aiuti il paziente a raggiungere i suoi traguardi fisici e di benessere. Non stai fornendo un semplice consiglio, ma prescrivendo un protocollo nutrizionale strutturato.`;
@@ -118,7 +120,7 @@ ${goalInstructions}${gastronomicInstructions}
 5. GRAMMATURE SEMPRE PRESENTI: ogni ingrediente deve avere i grammi esatti adeguati al peso e all'obiettivo (es. "Petto di pollo grigliato 150g, riso integrale 80g a secco, zucchine 120g, olio EVO 1 cucchiaio").
 6. Colazioni alternate dolci/salate ogni giorno, o comunque varie. Spuntini vari e diversi ogni giorno.
 7. RISPETTA RIGOROSAMENTE le allergie, le intolleranze e gli alimenti da escludere. Se il paziente esclude il pesce, non mettere MAI il pesce. Se è intollerante al lattosio, zero latticini (o solo alternative vegetali).
-8. DEVI GENERARE ESATTAMENTE ${mealsPerDay} PASTI AL GIORNO. ASSOLUTAMENTE NON UNO DI PIU' E NON UNO DI MENO. Rifiutati categoricamente di inserire spuntini extra se i pasti scelti sono 3 o 4. L'array "meals" deve avere SEMPRE e SOLO esattamente ${mealsPerDay} elementi in ogni singolo giorno. L'intelligenza Artificiale non deve mai aggiungere pasti non richiesti dal paziente.
+8. DEVI GENERARE ESATTAMENTE ${mealsPerDay} PASTI AL GIORNO. ASSOLUTAMENTE NON UNO DI PIU' E NON UNO DI MENO. Rifiutati categoricamente di inserire spuntini extra se i pasti scelti sono 3 o 4. L'array "meals" deve avere SEMPRE e SOLO esattamente ${mealsPerDay} elementi in ogni singolo giorno. L'intelligenza Artificiale non deve mai aggiungere pasti non richiesti dal paziente.${gastronomicStrictRule}
 
 === FORMATO OUTPUT - CRITICO ===
 Rispondi SOLO con un array JSON. Nessun testo prima. Nessun testo dopo. Nessun markdown. Nessun backtick.

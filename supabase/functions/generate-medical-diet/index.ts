@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
         
         let gastronomicInstructions = "";
         if (gastronomicCountries) {
-          gastronomicInstructions = `- INTEGRAZIONE GASTRONOMICA: L'utente ha esplicitamente richiesto l'integrazione di piatti gastronomici tipici dei seguenti paesi: ${gastronomicCountries}. DEVI integrare 1 o 2 piatti tipici per ciascun paese selezionato nel piano alimentare settimanale. Le ricette devono mantenere il gusto e il nome autentico del paese (es. "Ramen", "Tacos"), modificate e bilanciate per rispettare gli obiettivi clinici e le intolleranze.\n`;
+          gastronomicInstructions = `\n- TRADIZIONI CULINARIE OBBLIGATORIE: L'utente ha selezionato questi paesi: ${gastronomicCountries}. DEVI INSERIRE ALMENO UN PIATTO TIPICO DI QUESTI PAESI (es. Ramen, Tacos, Moussaka, ecc.) IN ALMENO 3-4 GIORNI ALLA SETTIMANA. I nomi dei piatti devono richiamare la nazione (es. "Pollo al Curry Indiano"). SE IGNORI QUESTA REGOLA L'UTENTE SARÀ MOLTO DELUSO.\n`;
         }
 
         let systemRole = `PROMPT FINALE ULTRA-RIGIDO Sei un medico nutrizionista estremamente preciso e meticoloso. La tua priorità assoluta è leggere CORRETTAMENTE l'immagine del referto.`;
