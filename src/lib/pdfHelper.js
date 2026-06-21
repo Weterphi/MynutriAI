@@ -9,17 +9,23 @@ export async function generateAndUploadPdf(userId, userName, userPrefs, dietPlan
 
   console.log("Avvio generazione PDF silente per l'upload...");
 
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.top = '0';
+  wrapper.style.left = '0';
+  wrapper.style.width = '100vw';
+  wrapper.style.height = '0';
+  wrapper.style.overflow = 'hidden';
+  wrapper.style.zIndex = '-1';
+
   const tempDiv = document.createElement('div');
   tempDiv.className = 'pdf-document is-printing';
-  // Posizionalo fuori dallo schermo in modo sicuro per html2canvas
-  tempDiv.style.position = 'absolute';
-  tempDiv.style.top = '0';
-  tempDiv.style.left = '0';
   tempDiv.style.width = '800px';
-  tempDiv.style.zIndex = '-9999';
   tempDiv.style.backgroundColor = '#ffffff';
   tempDiv.style.fontFamily = "'Inter', system-ui, sans-serif";
   tempDiv.style.color = '#000000';
+  
+  wrapper.appendChild(tempDiv);
   
   // Calcola gli orari dei pasti come nel componente visualizzatore
   const getMealTime = (mealName) => {
@@ -97,7 +103,7 @@ export async function generateAndUploadPdf(userId, userName, userPrefs, dietPlan
     </div>
   `;
 
-  document.body.appendChild(tempDiv);
+  document.body.appendChild(wrapper);
 
   const opt = {
     margin:       [10, 10, 10, 10],
@@ -118,7 +124,7 @@ export async function generateAndUploadPdf(userId, userName, userPrefs, dietPlan
     const pdfBlob = pdf.output('blob');
     
     // Rimuove l'elemento temporaneo dal DOM
-    document.body.removeChild(tempDiv);
+    document.body.removeChild(wrapper);
 
     const fileName = `pdfs/${userId}_dieta_${Date.now()}.pdf`;
     console.log("Caricamento PDF su Supabase Storage...", fileName);
@@ -140,8 +146,8 @@ export async function generateAndUploadPdf(userId, userName, userPrefs, dietPlan
     }
   } catch (err) {
     console.error("❌ Errore durante la generazione o caricamento del PDF:", err);
-    if (document.body.contains(tempDiv)) {
-      document.body.removeChild(tempDiv);
+    if (document.body.contains(wrapper)) {
+      document.body.removeChild(wrapper);
     }
   }
   return null;

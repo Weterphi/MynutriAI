@@ -16,7 +16,7 @@ export default function DietViewerModal({ isOpen, onClose, dietPlans, userPrefs,
       margin:       10,
       filename:     'La_Mia_Dieta_IA.pdf',
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
+      html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 

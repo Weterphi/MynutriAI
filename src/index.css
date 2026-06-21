@@ -807,12 +807,29 @@ textarea {
   max-width: 800px;
 }
 
-/* Durante la generazione PDF rimuoviamo ombre e bordi e margin per evitare artefatti */
+/* Durante la generazione PDF rimuoviamo ombre e bordi e margin per evitare artefatti, e forziamo le dimensioni desktop */
 .is-printing {
   box-shadow: none !important;
   margin: 0 !important;
   border-radius: 0 !important;
-  max-width: none !important;
+  max-width: 800px !important;
+  width: 800px !important;
+  padding: 40px !important;
+}
+
+.is-printing .pdf-meal-row {
+  flex-direction: row !important;
+}
+
+.is-printing .pdf-meal-time-col {
+  width: 140px !important;
+  border-right: 1px solid #f1f5f9 !important;
+  border-bottom: none !important;
+  padding: 16px !important;
+}
+
+.is-printing .pdf-meal-food-col {
+  padding: 16px !important;
 }
 
 .pdf-cover {
@@ -949,6 +966,28 @@ textarea {
   text-align: center;
   font-size: 12px;
   color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .pdf-document {
+    padding: 16px;
+  }
+  .pdf-user-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pdf-meal-row {
+    flex-direction: column;
+  }
+  .pdf-meal-time-col {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 12px 16px 8px 16px;
+  }
+  .pdf-meal-food-col {
+    padding: 8px 16px 16px 16px;
+  }
 }
 
 /* =========================================
