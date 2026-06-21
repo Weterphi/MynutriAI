@@ -23,6 +23,27 @@ export default function DashboardPortal({
   const [activeView, setActiveView] = useState('diet'); // 'diet' | 'store' | 'profile'
   const [activeWeek, setActiveWeek] = useState('week1'); 
   const [activeDay, setActiveDay] = useState('Giorno 1');
+
+  useEffect(() => {
+    if (dietStartDate) {
+      const createdDate = new Date(dietStartDate);
+      createdDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffTime = today.getTime() - createdDate.getTime();
+      let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      let dayNumber = diffDays <= 0 ? 1 : diffDays;
+      if (dayNumber > 30) dayNumber = 30;
+
+      const weekNum = Math.ceil(dayNumber / 7);
+      const activeW = weekNum <= 4 ? `week${weekNum}` : 'week4';
+      const dayIndexInWeek = ((dayNumber - 1) % 7) + 1;
+
+      setActiveWeek(activeW);
+      setActiveDay(`Giorno ${dayIndexInWeek}`);
+    }
+  }, [dietStartDate]);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -246,23 +267,7 @@ export default function DashboardPortal({
     nomeCompleto = `${formatName(cachedUserData.first_name)} ${formatName(cachedUserData.last_name || '')}`.trim();
   }
 
-  const activeWeekDays = activeWeek === 'week1' 
-    ? 'Giorni 1-7 (Corrente)' 
-    : activeWeek === 'week2' 
-      ? 'Giorni 8-14' 
-      : activeWeek === 'week3'
-        ? 'Giorni 15-21'
-        : 'Giorni 22-28';
-
-  const getActiveMeals = () => {
-    if (!cachedDiet || !Array.isArray(cachedDiet)) return [];
-    const weekNum = Number(activeWeek.replace('week', ''));
-    const dayIndex = days.indexOf(activeDay);
-    const targetDayNumber = (weekNum - 1) * 7 + dayIndex + 1;
-    const dayItem = cachedDiet.find(d => d.day_number === targetDayNumber);
-    return dayItem ? dayItem.meals : [];
-  };
-
+  // currentDay è ricalcolato poco sotto, ma serve per il "Corrente"
   let currentDay = 1;
   let estimatedWeight = cachedUserPrefs?.weight_kg || 0;
   let phaseName = 'Fase di Adattamento';
@@ -273,9 +278,9 @@ export default function DashboardPortal({
     createdDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    const diffTime = Math.abs(today.getTime() - createdDate.getTime());
-    currentDay = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const diffTime = today.getTime() - createdDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    currentDay = diffDays <= 0 ? 1 : diffDays;
     if (currentDay > 30) currentDay = 30;
 
     if (currentDay > 7 && currentDay <= 21) phaseName = 'Fase di Accelerazione';
@@ -293,6 +298,30 @@ export default function DashboardPortal({
       if (estimatedWeight < target) estimatedWeight = target;
     }
   }
+
+  const currentWeekNum = Math.ceil(currentDay / 7);
+  const activeWeekNum = Number(activeWeek.replace('week', ''));
+  const isCurrentWeek = activeWeekNum === currentWeekNum;
+  
+  const getWeekRange = (w) => {
+    if (w === 1) return '1-7';
+    if (w === 2) return '8-14';
+    if (w === 3) return '15-21';
+    return '22-30';
+  };
+  
+  const activeWeekDays = `Giorni ${getWeekRange(activeWeekNum)}${isCurrentWeek ? ' (Corrente)' : ''}`;
+
+  const getActiveMeals = () => {
+    if (!cachedDiet || !Array.isArray(cachedDiet)) return [];
+    const weekNum = Number(activeWeek.replace('week', ''));
+    const dayIndex = days.indexOf(activeDay);
+    const targetDayNumber = (weekNum - 1) * 7 + dayIndex + 1;
+    const dayItem = cachedDiet.find(d => d.day_number === targetDayNumber);
+    return dayItem ? dayItem.meals : [];
+  };
+
+
 
   const progressPercentage = (currentDay / 30) * 100;
     const hasNoDiet = !cachedDiet || !cachedUserPrefs;
