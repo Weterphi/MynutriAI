@@ -110,7 +110,7 @@ export async function generateAndUploadPdf(userId, userName, userPrefs, dietPlan
     filename:     `dieta_${userId}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { 
-      scale: 2, 
+      scale: 1, 
       useCORS: true,
       windowWidth: 800,
       scrollY: 0,
