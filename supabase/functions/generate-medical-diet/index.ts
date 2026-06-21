@@ -131,6 +131,13 @@ Deno.serve(async (req) => {
         const dietType = p.diet_type || (Array.isArray(p.dieta) ? p.dieta.join(', ') : p.dieta) || "Nessuna restrizione";
         const mealsPerDay = p.meals_per_day || p.pasti || 5;
         const excludedFoods = p.excluded_foods || p.escludere || "Nessuno";
+        const goal = p.goal || p.obiettivo || "Benessere generale";
+        const pacing = p.pacing || "Standard";
+        const activityLevel = p.activity_level || p.neat_level || "Non specificato";
+        const activeWorkoutHours = p.active_workout_hours || 0;
+        const budget = p.diet_budget || p.budget || "Non specificato";
+        const prepLunch = p.prep_time_lunch || p.prep_pranzo || "Non specificato";
+        const prepDinner = p.prep_time_dinner || p.prep_cena || "Non specificato";
         const gastronomicCountries = p.gastronomic_countries && Array.isArray(p.gastronomic_countries) && p.gastronomic_countries.length > 0 ? p.gastronomic_countries.join(', ') : null;
 
         const allergieStr = Array.isArray(p.allergies) && p.allergies.length > 0 ? p.allergies.join(", ") : (p.allergies || p.allergie?.join(', ') || "Nessuna");
@@ -162,15 +169,21 @@ Deno.serve(async (req) => {
 Ogni volta che l'utente carica un'immagine, devi analizzare **TUTTA** l'immagine con la massima attenzione. 
 Se nell'immagine si evince chiaramente un referto medico, un esame del sangue, urine, feci o un certificato diagnostico, DEVI leggere OGNI RIGA e individuare TUTTI i parametri fuori norma o patologici.
 
-**DATI UTENTE BASE**:
+**DATI UTENTE E STILE DI VITA**:
 - Sesso: ${gender}
 - Età: ${age}
 - Peso: ${weight}
 - Altezza: ${height}
 ${familyInstructions}- Tipo dieta preferita: ${dietType}
+- Obiettivo indicato: ${goal} (pacing: ${pacing})
+- Livello Attività (NEAT): ${activityLevel}
+- Ore Sport/Settimana: ${activeWorkoutHours}
 - Allergie base: ${allergieStr}
 - Da escludere base: ${excludedFoods}
-- Pasti desiderati: ${mealsPerDay} 
+- Pasti desiderati: ${mealsPerDay}
+- Budget spesa: ${budget}
+- Tempo prep. Pranzo: ${prepLunch}
+- Tempo prep. Cena: ${prepDinner}
 ${gastronomicInstructions}
 Inizia SEMPRE la risposta con questa frase esatta:
 
