@@ -26,12 +26,14 @@ export default function DashboardPortal({
 
   useEffect(() => {
     if (dietStartDate) {
-      const createdDate = new Date(dietStartDate);
-      createdDate.setHours(0, 0, 0, 0);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const getRomeDateString = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(d);
+      const createdRomeStr = getRomeDateString(new Date(dietStartDate));
+      const todayRomeStr = getRomeDateString(new Date());
+
+      const createdDate = new Date(`${createdRomeStr}T00:00:00Z`);
+      const today = new Date(`${todayRomeStr}T00:00:00Z`);
       const diffTime = today.getTime() - createdDate.getTime();
-      let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      let diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
       
       let dayNumber = diffDays <= 0 ? 1 : diffDays;
       if (dayNumber > 30) dayNumber = 30;
@@ -274,12 +276,14 @@ export default function DashboardPortal({
   let isLoss = cachedUserPrefs?.goal?.toLowerCase().includes('dimagrimento');
 
   if (dietStartDate && cachedUserPrefs) {
-    const createdDate = new Date(dietStartDate);
-    createdDate.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const getRomeDateString = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(d);
+    const createdRomeStr = getRomeDateString(new Date(dietStartDate));
+    const todayRomeStr = getRomeDateString(new Date());
+
+    const createdDate = new Date(`${createdRomeStr}T00:00:00Z`);
+    const today = new Date(`${todayRomeStr}T00:00:00Z`);
     const diffTime = today.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     currentDay = diffDays <= 0 ? 1 : diffDays;
     if (currentDay > 30) currentDay = 30;
 
