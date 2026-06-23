@@ -556,12 +556,13 @@ export default function DashboardPortal({
             <button 
               type="button" 
               className="btn btn-secondary" 
-              onClick={() => {
+              onClick={async () => {
+                const { data: { user } } = await supabase.auth.getUser();
                 setProfileForm({
                   firstName: cachedUserData?.first_name || '',
                   phone: cachedUserData?.phone_number || '',
-                  cap: cachedUserData?.user_metadata?.cap || spesaForm.cap || '',
-                  address: cachedUserData?.user_metadata?.address || spesaForm.address || ''
+                  cap: user?.user_metadata?.cap || spesaForm.cap || '',
+                  address: user?.user_metadata?.address || spesaForm.address || ''
                 });
                 setIsProfileModalOpen(true);
               }}
