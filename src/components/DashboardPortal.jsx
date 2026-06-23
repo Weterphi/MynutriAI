@@ -62,6 +62,7 @@ export default function DashboardPortal({
   const [isGeneratingSpesa, setIsGeneratingSpesa] = useState(false);
   const [shoppingList, setShoppingList] = useState(null);
   const [hasSavedSpesa, setHasSavedSpesa] = useState(false);
+  const [isSyncingCart, setIsSyncingCart] = useState(false);
 
   useEffect(() => {
     if (cachedUserData?.id) {
@@ -1040,7 +1041,18 @@ export default function DashboardPortal({
               <SpesaMapSection 
                 cap={cachedUserData?.user_metadata?.cap || spesaForm.cap} 
                 address={cachedUserData?.user_metadata?.address || spesaForm.address}
-                onSelectSupermarket={(market) => alert(`Hai scelto: ${market.name || market}`)}
+                onSelectSupermarket={(market) => {
+                  setIsSyncingCart(true);
+                  const marketName = market.name || market;
+                  setTimeout(() => {
+                    setIsSyncingCart(false);
+                    const searchUrl = marketName.includes('Amazon') 
+                      ? 'https://www.amazon.it/fmc/m/300030560' // Link diretto ad Amazon Fresh
+                      : `https://www.google.com/search?q=${encodeURIComponent(marketName + " spesa online")}`;
+                    window.open(searchUrl, '_blank');
+                    alert(`💡 DEMO MODE: L'integrazione automatica del carrello B2B con ${marketName} sarà attiva nella versione Enterprise. Per ora sei stato reindirizzato al loro sito web ufficiale.`);
+                  }, 2500);
+                }}
               />
 
               <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-default)', display: 'flex', gap: '12px' }}>
