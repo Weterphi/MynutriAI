@@ -286,14 +286,13 @@ IMPORTANTE: NON inserire NESSUN asterisco (*) nell'output generato per la format
 ${previewText}
 ---
 
-Il tuo compito è convertire questo menu settimanale in un piano esatto di 30 giorni in formato JSON.
-Devi estrapolare i 7 giorni e ripeterli in sequenza (es: giorno 8 = giorno 1, giorno 9 = giorno 2, ecc.) fino ad arrivare a 30 giorni totali.
+Il tuo compito è convertire questo menu settimanale in un piano JSON di 7 GIORNI ESATTI.
 
 REGOLA FONDAMENTALE SUI PASTI: DEVI GENERARE ESATTAMENTE ${numMeals} PASTI AL GIORNO. ASSOLUTAMENTE NON UNO DI PIU' E NON UNO DI MENO. Rifiutati categoricamente di inserire spuntini extra se i pasti scelti sono 3 o 4. L'array "meals" deve avere SEMPRE e SOLO esattamente ${numMeals} elementi in ogni singolo giorno. L'intelligenza Artificiale non deve mai aggiungere pasti non richiesti dal paziente.
 
 === FORMATO OUTPUT - CRITICO ===
 Rispondi SOLO con un array JSON. Nessun testo prima. Nessun testo dopo. Nessun markdown. Nessun backtick.
-L'array deve avere ESATTAMENTE 30 elementi. Non troncare. Non accorciare.
+L'array deve avere ESATTAMENTE 7 elementi. Non troncare. Non accorciare.
 
 Struttura di ogni elemento:
 [
@@ -331,8 +330,21 @@ ${mealsExample}
         try {
           const parsed = JSON.parse(rawContent);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            planJson = parsed;
+            let basePlan = parsed;
+            // Replica i giorni fino ad arrivare a 30
+            const fullPlan = [];
+            for (let i = 0; i < 30; i++) {
+              const sourceDay = basePlan[i % basePlan.length];
+              fullPlan.push({
+                ...sourceDay,
+                day_number: i + 1,
+                day_name: `Giorno ${i + 1}`,
+                week: Math.floor(i / 7) + 1
+              });
+            }
+            planJson = fullPlan;
             grokUsed = true;
+            console.log("✅ Grok piano clinico generato e replicato a 30 giorni");
           } else {
             grokError = "Array JSON vuoto da Grok";
           }

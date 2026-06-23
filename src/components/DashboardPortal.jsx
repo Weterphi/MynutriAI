@@ -6,6 +6,7 @@ import NavigationBar from './NavigationBar';
 import CartDrawer from './CartDrawer';
 import AILoadingOverlay from './AILoadingOverlay';
 import NutriChat from './NutriChat';
+import SpesaMapSection from './SpesaMapSection';
 
 export default function DashboardPortal({ 
   cachedUserData, 
@@ -52,6 +53,13 @@ export default function DashboardPortal({
   const [currentAvatar, setCurrentAvatar] = useState(() => {
     return localStorage.getItem('userAvatar') || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&style=circle';
   });
+
+  // Spesa States
+  const [isSpesaModalOpen, setIsSpesaModalOpen] = useState(false);
+  const [spesaForm, setSpesaForm] = useState({ cap: '', address: '' });
+  const [isSavingSpesa, setIsSavingSpesa] = useState(false);
+  const [isGeneratingSpesa, setIsGeneratingSpesa] = useState(false);
+  const [shoppingList, setShoppingList] = useState(null);
 
   // Nuovi state per il flusso in due step (preview -> genera JSON)
   const [dietPreviewText, setDietPreviewText] = useState(null);
@@ -260,6 +268,67 @@ export default function DashboardPortal({
       </div>
     );
   }
+
+  // === FUNZIONI PER LA SPESA INTELLIGENTE ===
+  const handleOpenSpesa = async () => {
+    // Controlliamo se abbiamo già i dati nel metadata
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.user_metadata?.cap && user?.user_metadata?.address) {
+      // Ha già i dati, procediamo direttamente alla generazione
+      setSpesaForm({ cap: user.user_metadata.cap, address: user.user_metadata.address });
+      generateShoppingList(user.id);
+    } else {
+      // Mostriamo il form
+      setIsSpesaModalOpen(true);
+    }
+  };
+
+  const handleSaveAndGenerateSpesa = async () => {
+    if (!spesaForm.cap || !spesaForm.address) {
+      alert("Inserisci CAP e Indirizzo per procedere.");
+      return;
+    }
+    setIsSavingSpesa(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.auth.updateUser({
+        data: { cap: spesaForm.cap, address: spesaForm.address }
+      });
+      setIsSpesaModalOpen(false);
+      generateShoppingList(user.id);
+    } catch (e) {
+      console.error(e);
+      alert("Errore nel salvataggio.");
+    } finally {
+      setIsSavingSpesa(false);
+    }
+  };
+
+  const generateShoppingList = async (userId) => {
+    if (!cachedDiet || cachedDiet.length === 0) {
+      alert("Nessuna dieta trovata. Genera prima una dieta.");
+      return;
+    }
+    setIsGeneratingSpesa(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("https://dkguwchycalrtsqxcttv.supabase.co/functions/v1/generate-shopping-list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+        body: JSON.stringify({ userId, dietJson: cachedDiet }),
+      });
+      if (!res.ok) throw new Error("Errore durante la generazione della spesa");
+      const data = await res.json();
+      if (data.shoppingList) {
+        setShoppingList(data.shoppingList);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Si è verificato un errore durante la generazione della spesa.");
+    } finally {
+      setIsGeneratingSpesa(false);
+    }
+  };
 
   const formatName = (str) => str ? str.replace(/\b\w/g, c => c.toUpperCase()) : '';
   let nomeCompleto = 'Utente NutriAI';
@@ -576,10 +645,16 @@ export default function DashboardPortal({
           <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-title)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             Il Tuo Piano Alimentare
           </h3>
-          <button type="button" className="btn btn-primary" onClick={() => setIsPdfModalOpen(true)} style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            Scarica PDF
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="button" className="btn btn-secondary" onClick={handleOpenSpesa} style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', borderColor: 'var(--celeste-primary)', color: 'var(--celeste-primary)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+              Ordina Spesa
+            </button>
+            <button type="button" className="btn btn-primary" onClick={() => setIsPdfModalOpen(true)} style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              Scarica PDF
+            </button>
+          </div>
         </div>
         
         <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-default)', padding: '24px' }}>
@@ -748,6 +823,95 @@ export default function DashboardPortal({
                 <div><label className="form-label">Cibi da escludere</label><input type="text" className="form-input" placeholder="Es. Funghi, Peperoni..." value={newMemberData.excluded_foods} onChange={e => setNewMemberData({...newMemberData, excluded_foods: e.target.value})} /></div>
                 <button type="button" className="btn btn-primary" onClick={handleAddNewMemberSubmit} style={{ marginTop: '8px' }}>Aggiungi alla Famiglia</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {isSpesaModalOpen && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+            <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: 'var(--color-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--celeste-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  Consegna Spesa
+                </h3>
+                <button onClick={() => setIsSpesaModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--color-muted)' }}>&times;</button>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--color-muted)', marginBottom: '20px', lineHeight: '1.5' }}>
+                Inserisci l'indirizzo per verificare la copertura di Amazon Fresh o trovare i supermercati convenzionati vicino a te. Lo chiederemo solo questa volta.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label className="form-label">Nome e Cognome</label>
+                  <input type="text" className="form-input" value={nomeCompleto} disabled style={{ backgroundColor: 'var(--bg-subtle)' }} />
+                </div>
+                <div>
+                  <label className="form-label">Numero di Telefono</label>
+                  <input type="text" className="form-input" value={cachedUserData?.phone_number || ''} disabled style={{ backgroundColor: 'var(--bg-subtle)' }} />
+                </div>
+                <div>
+                  <label className="form-label">CAP (Codice Avviamento Postale)</label>
+                  <input type="text" className="form-input" placeholder="Es. 20100" value={spesaForm.cap} onChange={e => setSpesaForm({...spesaForm, cap: e.target.value})} maxLength={5} />
+                </div>
+                <div>
+                  <label className="form-label">Indirizzo di Consegna</label>
+                  <input type="text" className="form-input" placeholder="Es. Via Roma 10" value={spesaForm.address} onChange={e => setSpesaForm({...spesaForm, address: e.target.value})} />
+                </div>
+                <button type="button" className="btn btn-primary" onClick={handleSaveAndGenerateSpesa} disabled={isSavingSpesa} style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
+                  {isSavingSpesa ? 'Salvataggio...' : 'Salva e Genera Spesa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isGeneratingSpesa && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+            <div className="spinner" style={{ width: '50px', height: '50px', borderTopColor: 'var(--celeste-primary)', marginBottom: '20px' }}></div>
+            <h3 style={{ color: 'white', margin: 0 }}>Preparazione Lista Spesa...</h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', marginTop: '8px' }}>L'IA sta elaborando gli ingredienti della tua settimana.</p>
+          </div>
+        )}
+
+        {shoppingList && !isGeneratingSpesa && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+            <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border-default)', paddingBottom: '16px' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: 'var(--color-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--celeste-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                  La tua Lista della Spesa
+                </h3>
+                <button onClick={() => setShoppingList(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--color-muted)' }}>&times;</button>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {Object.entries(shoppingList).map(([category, items]) => {
+                  if (!items || items.length === 0) return null;
+                  return (
+                    <div key={category} style={{ backgroundColor: 'var(--bg-subtle)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: 'var(--celeste-primary)' }}>{category}</h4>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {items.map((item, idx) => (
+                          <li key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-default)', paddingBottom: '4px' }}>
+                            <span style={{ color: 'var(--color-title)' }}>{item.item}</span>
+                            <span style={{ fontWeight: '600', color: 'var(--color-muted)' }}>{item.quantity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-default)', display: 'flex', gap: '12px' }}>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShoppingList(null)}>Chiudi</button>
+              </div>
+
+              <SpesaMapSection 
+                cap={cachedUserData?.user_metadata?.cap || spesaForm.cap} 
+                address={cachedUserData?.user_metadata?.address || spesaForm.address}
+                onSelectSupermarket={(market) => alert(`Hai scelto: ${market.name || market}`)}
+              />
             </div>
           </div>
         )}

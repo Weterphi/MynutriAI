@@ -114,17 +114,17 @@ ${goalInstructions}${gastronomicInstructions}
 
 === REGOLE GENERALI FERREE ===
 1. Le istruzioni dell'obiettivo sopra hanno PRIORITÀ ASSOLUTA sulla composizione dei pasti.
-2. Il piano deve coprire ESATTAMENTE 30 giorni, numerati da 1 a 30, divisi in 4 settimane fittizie per comodità visiva.
-3. VARIETÀ OBBLIGATORIA: nessun pasto principale può ripetersi identico nei 4 giorni precedenti. Sii creativo, proponi piatti sani ma invitanti. Rispetta il budget e il tempo di preparazione indicati dal paziente.
+2. Il piano deve coprire ESATTAMENTE 7 GIORNI, numerati da 1 a 7. Sarà il nostro sistema a replicarli per il mese interno.
+3. VARIETÀ OBBLIGATORIA: nessun pasto principale può ripetersi identico nei 4 giorni precedenti. Sii creativo, proponi piatti sani ma invitanti. Rispetta il budget e il tempo di preparazione.
 4. MAI lo stesso proteico principale a pranzo e cena dello stesso giorno.
-5. GRAMMATURE SEMPRE PRESENTI: ogni ingrediente deve avere i grammi esatti adeguati al peso e all'obiettivo (es. "Petto di pollo grigliato 150g, riso integrale 80g a secco, zucchine 120g, olio EVO 1 cucchiaio").
+5. GRAMMATURE SEMPRE PRESENTI: ogni ingrediente deve avere i grammi esatti adeguati al peso e all'obiettivo.
 6. Colazioni alternate dolci/salate ogni giorno, o comunque varie. Spuntini vari e diversi ogni giorno.
 7. RISPETTA RIGOROSAMENTE le allergie, le intolleranze e gli alimenti da escludere. Se il paziente esclude il pesce, non mettere MAI il pesce. Se è intollerante al lattosio, zero latticini (o solo alternative vegetali).
 8. DEVI GENERARE ESATTAMENTE ${mealsPerDay} PASTI AL GIORNO. ASSOLUTAMENTE NON UNO DI PIU' E NON UNO DI MENO. Rifiutati categoricamente di inserire spuntini extra se i pasti scelti sono 3 o 4. L'array "meals" deve avere SEMPRE e SOLO esattamente ${mealsPerDay} elementi in ogni singolo giorno. L'intelligenza Artificiale non deve mai aggiungere pasti non richiesti dal paziente.${gastronomicStrictRule}
 
 === FORMATO OUTPUT - CRITICO ===
 Rispondi SOLO con un array JSON. Nessun testo prima. Nessun testo dopo. Nessun markdown. Nessun backtick.
-L'array deve avere ESATTAMENTE 30 elementi. Non troncare. Non accorciare.
+L'array deve avere ESATTAMENTE 7 elementi. Non troncare. Non accorciare.
 
 Struttura di ogni elemento:
 [
@@ -185,8 +185,20 @@ Inizia direttamente con [ e termina con ].`;
         try {
           const parsed = JSON.parse(rawContent);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            planJson = parsed;
-            console.log("✅ Grok piano generato:", planJson.length, "giorni");
+            let basePlan = parsed;
+            // Replica i giorni fino ad arrivare a 30
+            const fullPlan = [];
+            for (let i = 0; i < 30; i++) {
+              const sourceDay = basePlan[i % basePlan.length];
+              fullPlan.push({
+                ...sourceDay,
+                day_number: i + 1,
+                day_name: `Giorno ${i + 1}`,
+                week: Math.floor(i / 7) + 1
+              });
+            }
+            planJson = fullPlan;
+            console.log("✅ Grok piano generato e replicato a 30 giorni");
           } else {
             grokError = "Grok ha restituito un array vuoto o invalido";
             throw new Error(grokError);
