@@ -61,6 +61,16 @@ export default function DashboardPortal({
   const [isGeneratingSpesa, setIsGeneratingSpesa] = useState(false);
   const [shoppingList, setShoppingList] = useState(null);
 
+  // Profile Modal State
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    firstName: cachedUserData?.first_name || '',
+    phone: cachedUserData?.phone_number || '',
+    cap: cachedUserData?.user_metadata?.cap || '',
+    address: cachedUserData?.user_metadata?.address || ''
+  });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
   // Nuovi state per il flusso in due step (preview -> genera JSON)
   const [dietPreviewText, setDietPreviewText] = useState(null);
   const [isGeneratingFinal, setIsGeneratingFinal] = useState(false);
@@ -330,6 +340,30 @@ export default function DashboardPortal({
     }
   };
 
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    try {
+      // 1. Aggiorna Auth Metadata
+      await supabase.auth.updateUser({
+        data: { cap: profileForm.cap, address: profileForm.address }
+      });
+      // 2. Aggiorna tabella users per nome e telefono se necessario
+      if (cachedUserData?.id) {
+        await supabase.from('users').update({
+          first_name: profileForm.firstName,
+          phone_number: profileForm.phone
+        }).eq('id', cachedUserData.id);
+      }
+      setIsProfileModalOpen(false);
+      alert("Profilo aggiornato con successo! Le modifiche verranno applicate al prossimo accesso o ricaricamento.");
+    } catch (error) {
+      console.error(error);
+      alert("Errore durante l'aggiornamento del profilo.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   const formatName = (str) => str ? str.replace(/\b\w/g, c => c.toUpperCase()) : '';
   let nomeCompleto = 'Utente NutriAI';
   if (isFamily) {
@@ -518,14 +552,32 @@ export default function DashboardPortal({
               </div>
             </div>
           </div>
-          <button 
-            type="button" 
-            className="btn btn-secondary" 
-            onClick={async () => { await supabase.auth.signOut(); onLogout(); }} 
-            style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '8px' }}
-          >
-            Esci
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={() => {
+                setProfileForm({
+                  firstName: cachedUserData?.first_name || '',
+                  phone: cachedUserData?.phone_number || '',
+                  cap: cachedUserData?.user_metadata?.cap || spesaForm.cap || '',
+                  address: cachedUserData?.user_metadata?.address || spesaForm.address || ''
+                });
+                setIsProfileModalOpen(true);
+              }}
+              style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '8px' }}
+            >
+              Modifica Profilo
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={async () => { await supabase.auth.signOut(); onLogout(); }} 
+              style={{ padding: '8px 16px', fontSize: '13px', borderRadius: '8px' }}
+            >
+              Esci
+            </button>
+          </div>
         </div>
       </section>
 
@@ -859,6 +911,38 @@ export default function DashboardPortal({
                 </div>
                 <button type="button" className="btn btn-primary" onClick={handleSaveAndGenerateSpesa} disabled={isSavingSpesa} style={{ marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
                   {isSavingSpesa ? 'Salvataggio...' : 'Salva e Genera Spesa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isProfileModalOpen && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+            <div style={{ backgroundColor: 'var(--bg-card)', padding: '24px', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, color: 'var(--color-title)' }}>Modifica Profilo</h3>
+                <button onClick={() => setIsProfileModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--color-muted)' }}>&times;</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label className="form-label">Nome</label>
+                  <input type="text" className="form-input" value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})} />
+                </div>
+                <div>
+                  <label className="form-label">Numero di Telefono</label>
+                  <input type="text" className="form-input" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} />
+                </div>
+                <div>
+                  <label className="form-label">CAP</label>
+                  <input type="text" className="form-input" maxLength={5} value={profileForm.cap} onChange={e => setProfileForm({...profileForm, cap: e.target.value})} />
+                </div>
+                <div>
+                  <label className="form-label">Indirizzo di Consegna</label>
+                  <input type="text" className="form-input" value={profileForm.address} onChange={e => setProfileForm({...profileForm, address: e.target.value})} />
+                </div>
+                <button type="button" className="btn btn-primary" onClick={handleSaveProfile} disabled={isSavingProfile} style={{ marginTop: '8px' }}>
+                  {isSavingProfile ? 'Salvataggio...' : 'Salva Modifiche'}
                 </button>
               </div>
             </div>
