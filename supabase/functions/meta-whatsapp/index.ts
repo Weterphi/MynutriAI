@@ -80,6 +80,7 @@ serve(async (req) => {
               parameters: [
                 {
                   type: "text",
+                  parameter_name: "nome_cliente",
                   text: name || "Amico"
                 }
               ]
@@ -130,10 +131,10 @@ serve(async (req) => {
 
       for (const plan of plans) {
         const wakeupTime = prefMap[plan.user_id] || "07:00:00";
-        const wakeupHour = wakeupTime.split(':')[0]; // es. '07'
+        const wakeupHour = parseInt(wakeupTime.split(':')[0], 10);
 
         // Se non è l'ora di sveglia, salta questo utente (a meno che non forziamo con test_day)
-        if (wakeupHour !== romeHour && !test_day) {
+        if (wakeupHour !== parseInt(romeHour, 10) && !test_day) {
           continue;
         }
 
@@ -147,17 +148,19 @@ serve(async (req) => {
           continue;
         }
 
-        // Calcoliamo quanti giorni sono passati dalla creazione della dieta
-        const createdDate = new Date(plan.created_at)
-        const today = new Date()
-        createdDate.setHours(0, 0, 0, 0)
-        today.setHours(0, 0, 0, 0)
+        // Standardizziamo le date sul fuso orario di Roma a mezzanotte
+        const getRomeDateString = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(d);
+        const createdRomeStr = getRomeDateString(new Date(plan.created_at));
+        const todayRomeStr = getRomeDateString(new Date());
+
+        const createdDate = new Date(`${createdRomeStr}T00:00:00Z`);
+        const today = new Date(`${todayRomeStr}T00:00:00Z`);
         
-        const diffTime = today.getTime() - createdDate.getTime()
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+        const diffTime = today.getTime() - createdDate.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
         
-        // Giorno 0 è il giorno di creazione. Da domani sarà Giorno 1.
-        let currentDayNumber = diffDays + 1
+        // Giorno 0 è il giorno di creazione (non mandiamo nulla). Da domani sarà Giorno 1.
+        let currentDayNumber = diffDays;
         if (test_day) {
           currentDayNumber = test_day; // Override per i test
         }
@@ -171,10 +174,11 @@ serve(async (req) => {
         if (todayMenu) {
           const userName = userData?.first_name || 'Amico'
           
-          // Formattiamo il menu per WhatsApp in un modo pulito
+          // I parametri dei template Meta NON accettano ritorni a capo (\n) o tab.
+          // Formattiamo in linea usando un separatore visibile.
           const mealsSummaryText = todayMenu.meals
-            .map((m: any) => `🍴 *${m.name}*\n${m.food}`)
-            .join('\n\n');
+            .map((m: any) => `🍴 *${m.name}*: ${m.food.replace(/\n/g, ' ')}`)
+            .join('  •  ');
 
           const motivationalPhrases = [
             "Inizia un nuovo viaggio! Ogni grande traguardo inizia con un piccolo passo. 🚀",
@@ -218,17 +222,16 @@ serve(async (req) => {
             to: phoneNumber.replace(/[\+\s]/g, ''),
             type: "template",
             template: {
-              name: "menu_del_giorno",
+              name: "menu_del_giorno_utility",
               language: { code: "it" },
               components: [
                 {
                   type: "body",
                   parameters: [
-                    { type: "text", text: userName },
-                    { type: "text", text: dailyPhrase },
-                    { type: "text", text: currentDayNumber.toString() },
-                    { type: "text", text: todayMenu.day_name },
-                    { type: "text", text: mealsSummaryText }
+                    { type: "text", parameter_name: "nome_cliente", text: userName },
+                    { type: "text", parameter_name: "frase_motivazionale", text: dailyPhrase },
+                    { type: "text", parameter_name: "numero_giorno", text: currentDayNumber.toString() },
+                    { type: "text", parameter_name: "menu_completo", text: `(${todayMenu.day_name}) - ${mealsSummaryText}` }
                   ]
                 }
               ]
