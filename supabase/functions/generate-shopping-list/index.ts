@@ -22,9 +22,9 @@ serve(async (req) => {
       });
     }
 
-    const xaiKey = Deno.env.get("XAI_API_KEY");
+    const xaiKey = Deno.env.get("NUTRI-XAI") ?? Deno.env.get("XAI");
     if (!xaiKey) {
-      throw new Error("Missing XAI_API_KEY config");
+      throw new Error("Missing NUTRI-XAI config");
     }
 
     // We only need the first 7 days to calculate the weekly shopping list
