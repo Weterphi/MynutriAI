@@ -61,6 +61,13 @@ export default function DashboardPortal({
   const [isSavingSpesa, setIsSavingSpesa] = useState(false);
   const [isGeneratingSpesa, setIsGeneratingSpesa] = useState(false);
   const [shoppingList, setShoppingList] = useState(null);
+  const [hasSavedSpesa, setHasSavedSpesa] = useState(false);
+
+  useEffect(() => {
+    if (cachedUserData?.id) {
+      setHasSavedSpesa(localStorage.getItem(`spesa_saved_${cachedUserData.id}_${activeWeek}`) === "true");
+    }
+  }, [activeWeek, cachedUserData?.id, shoppingList]);
 
   // Profile Modal State
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -724,9 +731,14 @@ export default function DashboardPortal({
             Il Tuo Piano Alimentare
           </h3>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button type="button" className="btn btn-secondary" onClick={handleOpenSpesa} style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', borderColor: 'var(--celeste-primary)', color: 'var(--celeste-primary)' }}>
+            <button 
+              type="button" 
+              className="btn btn-secondary" 
+              onClick={handleOpenSpesa} 
+              style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', borderColor: 'var(--celeste-primary)', color: 'var(--celeste-primary)' }}
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-              Ordina Spesa
+              {hasSavedSpesa ? 'Completa Spesa' : 'Ordina Spesa'}
             </button>
             <button type="button" className="btn btn-primary" onClick={() => setIsPdfModalOpen(true)} style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -1013,17 +1025,16 @@ export default function DashboardPortal({
                 })}
               </div>
               
-              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-default)', display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
                 <button 
                   type="button" 
                   className="btn btn-primary" 
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} 
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 24px', borderRadius: 'var(--radius-md)', fontWeight: '600' }} 
                   onClick={() => generateAndShareShoppingListPdf(nomeCompleto, activeWeek, shoppingList)}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                  Condividi
+                  Condividi Lista
                 </button>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShoppingList(null)}>Chiudi</button>
               </div>
 
               <SpesaMapSection 
@@ -1031,6 +1042,23 @@ export default function DashboardPortal({
                 address={cachedUserData?.user_metadata?.address || spesaForm.address}
                 onSelectSupermarket={(market) => alert(`Hai scelto: ${market.name || market}`)}
               />
+
+              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-default)', display: 'flex', gap: '12px' }}>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShoppingList(null)}>Chiudi</button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  style={{ flex: 1, backgroundColor: '#059669', borderColor: '#047857' }} 
+                  onClick={() => {
+                    if (cachedUserData?.id) {
+                      localStorage.setItem(`spesa_saved_${cachedUserData.id}_${activeWeek}`, "true");
+                    }
+                    setShoppingList(null);
+                  }}
+                >
+                  Ordina Dopo
+                </button>
+              </div>
             </div>
           </div>
         )}
