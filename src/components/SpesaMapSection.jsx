@@ -13,7 +13,13 @@ export default function SpesaMapSection({ cap, address, onSelectSupermarket }) {
         // 1. Geocode CAP e Indirizzo tramite Nominatim
         const query = encodeURIComponent(`${address ? address + ', ' : ''}${cap}, Italy`);
         const geocodeRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
-        const geocodeData = await geocodeRes.json();
+        const geocodeText = await geocodeRes.text();
+        let geocodeData;
+        try {
+          geocodeData = JSON.parse(geocodeText);
+        } catch(e) {
+          throw new Error("Servizio mappe sovraccarico. Riprova tra poco.");
+        }
 
         if (!geocodeData || geocodeData.length === 0) {
           throw new Error("Impossibile trovare le coordinate per questo indirizzo.");
@@ -25,7 +31,14 @@ export default function SpesaMapSection({ cap, address, onSelectSupermarket }) {
         // 2. Cerca supermercati nel raggio di 5km tramite Overpass API
         const overpassQuery = `[out:json];node(around:5000,${lat},${lon})["shop"="supermarket"];out 10;`;
         const overpassRes = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`);
-        const overpassData = await overpassRes.json();
+        const overpassText = await overpassRes.text();
+        let overpassData = null;
+        try {
+          overpassData = JSON.parse(overpassText);
+        } catch(e) {
+          console.warn("Overpass API error:", e);
+          // Fallback silenzioso: se fallisce mostriamo solo Amazon Fresh e mappa vuota
+        }
 
         if (overpassData && overpassData.elements) {
           const formattedMarkets = overpassData.elements
@@ -132,7 +145,7 @@ export default function SpesaMapSection({ cap, address, onSelectSupermarket }) {
             scrolling="no" 
             marginHeight="0" 
             marginWidth="0" 
-            src={\`https://www.openstreetmap.org/export/embed.html?bbox=\${location.lon - 0.02},\${location.lat - 0.02},\${location.lon + 0.02},\${location.lat + 0.02}&layer=mapnik&marker=\${location.lat},\${location.lon}\`}
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.lon - 0.02},${location.lat - 0.02},${location.lon + 0.02},${location.lat + 0.02}&layer=mapnik&marker=${location.lat},${location.lon}`}
           ></iframe>
         </div>
       )}
