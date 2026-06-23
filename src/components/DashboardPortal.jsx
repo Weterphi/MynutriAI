@@ -7,6 +7,7 @@ import CartDrawer from './CartDrawer';
 import AILoadingOverlay from './AILoadingOverlay';
 import NutriChat from './NutriChat';
 import SpesaMapSection from './SpesaMapSection';
+import { generateAndShareShoppingListPdf } from '../lib/pdfShoppingList';
 
 export default function DashboardPortal({ 
   cachedUserData, 
@@ -1013,6 +1014,15 @@ export default function DashboardPortal({
               </div>
               
               <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-default)', display: 'flex', gap: '12px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} 
+                  onClick={() => generateAndShareShoppingListPdf(nomeCompleto, activeWeek, shoppingList)}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                  Condividi
+                </button>
                 <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShoppingList(null)}>Chiudi</button>
               </div>
 
