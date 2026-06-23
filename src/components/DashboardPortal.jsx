@@ -319,18 +319,42 @@ export default function DashboardPortal({
       alert("Nessuna dieta trovata. Genera prima una dieta.");
       return;
     }
+
+    // Identifica la porzione di dieta per la settimana selezionata (7 giorni)
+    const weekIndex = parseInt(activeWeek.replace('week', '')) - 1;
+    const startDay = weekIndex * 7;
+    const endDay = startDay + 7;
+    const weeklyDiet = cachedDiet.slice(startDay, endDay);
+
+    // Crea un hash/identificatore per la cache locale in modo da risparmiare token
+    const dietHash = weeklyDiet.map(d => d.meals[0]?.food?.substring(0, 10)).join('').replace(/\s/g, '');
+    const cacheKey = `spesa_${userId}_${activeWeek}_${dietHash}`;
+    const cachedSpesa = localStorage.getItem(cacheKey);
+
     setIsGeneratingSpesa(true);
+
+    if (cachedSpesa) {
+      // Se abbiamo già generato questa lista per questa esatta dieta, usiamo la cache
+      setTimeout(() => {
+        setShoppingList(JSON.parse(cachedSpesa));
+        setIsGeneratingSpesa(false);
+      }, 500); // Piccolo ritardo per UX
+      return;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch("https://dkguwchycalrtsqxcttv.supabase.co/functions/v1/generate-shopping-list", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
-        body: JSON.stringify({ userId, dietJson: cachedDiet }),
+        body: JSON.stringify({ userId, dietJson: weeklyDiet }),
       });
       if (!res.ok) throw new Error("Errore durante la generazione della spesa");
       const data = await res.json();
       if (data.shoppingList) {
         setShoppingList(data.shoppingList);
+        // Salviamo nella cache locale
+        localStorage.setItem(cacheKey, JSON.stringify(data.shoppingList));
       }
     } catch (error) {
       console.error(error);
