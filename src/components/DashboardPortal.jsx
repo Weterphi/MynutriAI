@@ -784,24 +784,15 @@ export default function DashboardPortal({
             {getActiveMeals().length > 0 ? (
               getActiveMeals().map((meal, index) => {
                 const getMealImage = (meal) => {
-                  const t = (meal.food || '').toLowerCase();
-                  let keyword = 'healthy,meal';
-                  if (t.includes('pollo') || t.includes('tacchino')) keyword = 'chicken,meal';
-                  else if (t.includes('pesce') || t.includes('salmone') || t.includes('tonno')) keyword = 'fish,dish';
-                  else if (t.includes('uova') || t.includes('uovo')) keyword = 'eggs,breakfast';
-                  else if (t.includes('pasta') || t.includes('riso') || t.includes('farro')) keyword = 'pasta,dish';
-                  else if (t.includes('carne') || t.includes('manzo')) keyword = 'meat,dish';
-                  else if (t.includes('frutta') || t.includes('mela') || t.includes('banana')) keyword = 'fruit,bowl';
-                  else if (t.includes('insalata') || t.includes('verdura')) keyword = 'salad,bowl';
-                  else if (t.includes('yogurt') || t.includes('latte')) keyword = 'yogurt,fruit';
-                  else if (t.includes('pane') || t.includes('toast')) keyword = 'toast,healthy';
-
-                  // Creiamo un ID unico basato sul testo della ricetta per mantenere l'immagine coerente (stessa ricetta = stessa immagine)
-                  // ma diversa per ricette diverse!
-                  const hash = (meal.food || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                  const lockId = (hash % 1000) + 1; // Un numero tra 1 e 1000
+                  let safeFood = meal.food ? meal.food.replace(/[^a-zA-Z0-9 \u00C0-\u017F]/g, " ").substring(0, 100).trim() : "healthy meal";
+                  // Aggiungiamo un suffisso per forzare lo stile "food photography"
+                  const promptText = `${safeFood}, highly detailed food photography, top down view, healthy meal on a beautiful plate, 4k`;
+                  const prompt = encodeURIComponent(promptText);
                   
-                  return `https://loremflickr.com/600/400/${keyword}?lock=${lockId}`;
+                  // Generiamo un seed deterministico basato sulla ricetta, così non ricarica l'immagine all'infinito!
+                  const hash = safeFood.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                  
+                  return `https://image.pollinations.ai/prompt/${prompt}?width=600&height=400&nologo=true&seed=${hash}`;
                 };
 
                 return (
