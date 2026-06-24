@@ -785,15 +785,15 @@ export default function DashboardPortal({
               getActiveMeals().map((meal, index) => {
                 const getMealImage = (mealName, idx) => {
                   const name = mealName.toLowerCase();
-                  if (name.includes('colazione')) return "https://images.pexels.com/photos/1015568/pexels-photo-1015568.jpeg?auto=compress&cs=tinysrgb&w=600"; // Pancakes/Berries
+                  if (name.includes('colazione')) return "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=600"; // Pancakes/Frutta
                   if (name.includes('spuntino') || name.includes('merenda')) {
                     return idx % 2 === 0 
-                      ? "https://images.pexels.com/photos/1092730/pexels-photo-1092730.jpeg?auto=compress&cs=tinysrgb&w=600" // Fruit
-                      : "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=600"; // Snack
+                      ? "https://images.pexels.com/photos/1092730/pexels-photo-1092730.jpeg?auto=compress&cs=tinysrgb&w=600" // Ciotola di frutta
+                      : "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=600"; // Cibo salutare flatlay
                   }
-                  if (name.includes('pranzo')) return "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600"; // Salad
-                  if (name.includes('cena')) return "https://images.pexels.com/photos/3184183/pexels-photo-3184183.jpeg?auto=compress&cs=tinysrgb&w=600"; // Dinner plate
-                  return "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=600"; // Fallback
+                  if (name.includes('pranzo')) return "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600"; // Insalatona sana
+                  if (name.includes('cena')) return "https://images.pexels.com/photos/262959/pexels-photo-262959.jpeg?auto=compress&cs=tinysrgb&w=600"; // Piatto di pesce/salmone
+                  return "https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=600"; // Fallback piatto generico
                 };
 
                 return (
