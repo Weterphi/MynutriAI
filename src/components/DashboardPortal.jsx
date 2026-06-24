@@ -785,15 +785,15 @@ export default function DashboardPortal({
               getActiveMeals().map((meal, index) => {
                 const getMealImage = (mealName, idx) => {
                   const name = mealName.toLowerCase();
-                  if (name.includes('colazione')) return "https://images.unsplash.com/photo-1494859802845-81ebc569eb2e?auto=format&fit=crop&w=600&h=300&q=80"; // Pancakes/Berries
+                  if (name.includes('colazione')) return "https://images.pexels.com/photos/1015568/pexels-photo-1015568.jpeg?auto=compress&cs=tinysrgb&w=600"; // Pancakes/Berries
                   if (name.includes('spuntino') || name.includes('merenda')) {
                     return idx % 2 === 0 
-                      ? "https://images.unsplash.com/photo-1519996434828-991f807270b2?auto=format&fit=crop&w=600&h=300&q=80" // Berries/Nuts
-                      : "https://images.unsplash.com/photo-1515022201948-43d93375ea75?auto=format&fit=crop&w=600&h=300&q=80"; // Fruit bowl
+                      ? "https://images.pexels.com/photos/1092730/pexels-photo-1092730.jpeg?auto=compress&cs=tinysrgb&w=600" // Fruit
+                      : "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=600"; // Snack
                   }
-                  if (name.includes('pranzo')) return "https://images.unsplash.com/photo-1546069901-ba6e6a14d5ce?auto=format&fit=crop&w=600&h=300&q=80"; // Salad bowl
-                  if (name.includes('cena')) return "https://images.unsplash.com/photo-1467003909585-2f8afa726156?auto=format&fit=crop&w=600&h=300&q=80"; // Salmon
-                  return "https://images.unsplash.com/photo-1490645935980-d1171385d656?auto=format&fit=crop&w=600&h=300&q=80"; // Smoothie fallback
+                  if (name.includes('pranzo')) return "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600"; // Salad
+                  if (name.includes('cena')) return "https://images.pexels.com/photos/3184183/pexels-photo-3184183.jpeg?auto=compress&cs=tinysrgb&w=600"; // Dinner plate
+                  return "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=600"; // Fallback
                 };
 
                 return (
