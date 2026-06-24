@@ -784,13 +784,16 @@ export default function DashboardPortal({
             {getActiveMeals().length > 0 ? (
               getActiveMeals().map((meal, index) => {
                 const getMealImage = (meal, idx) => {
-                  // Creiamo un prompt testuale unendo il nome della ricetta in italiano 
+                  // Puliamo il testo: rimuoviamo caratteri strani e teniamo solo i primi 80 caratteri
+                  // per evitare che l'URL diventi troppo lungo e il server rifiuti la foto (mostrando il vuoto).
+                  let safeFood = meal.food ? meal.food.replace(/[^a-zA-Z0-9 \u00C0-\u017F]/g, " ").substring(0, 80).trim() : "healthy meal";
+                  
+                  // Creiamo un prompt testuale unendo il nome della ricetta pulito
                   // a delle parole chiave in inglese per forzare un'estetica da "food photography"
-                  const promptText = `${meal.food}, high quality delicious healthy diet meal on a beautiful plate, professional food photography, 4k`;
+                  const promptText = `${safeFood}, high quality delicious healthy diet meal on a beautiful plate, professional food photography, 4k`;
                   const prompt = encodeURIComponent(promptText);
                   
-                  // Pollinations AI genera un'immagine in tempo reale (gratis e senza API key)
-                  // basata esattamente sul testo del nostro pasto!
+                  // Pollinations AI genera un'immagine in tempo reale
                   return `https://image.pollinations.ai/prompt/${prompt}?width=600&height=300&nologo=true`;
                 };
 
