@@ -783,30 +783,10 @@ export default function DashboardPortal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
             {getActiveMeals().length > 0 ? (
               getActiveMeals().map((meal, index) => {
-                const getMealImage = (meal) => {
-                  let safeFood = meal.food ? meal.food.replace(/[^a-zA-Z0-9 \u00C0-\u017F]/g, " ").substring(0, 100).trim() : "healthy meal";
-                  // Aggiungiamo un suffisso per forzare lo stile "food photography"
-                  const promptText = `${safeFood}, highly detailed food photography, top down view, healthy meal on a beautiful plate, 4k`;
-                  const prompt = encodeURIComponent(promptText);
-                  
-                  // Generiamo un seed deterministico basato sulla ricetta, così non ricarica l'immagine all'infinito!
-                  const hash = safeFood.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                  
-                  return `https://image.pollinations.ai/prompt/${prompt}?width=600&height=400&nologo=true&seed=${hash}`;
-                };
-
                 return (
-                  <div key={index} style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', backgroundColor: 'var(--bg-app)', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', transition: 'transform 0.2s ease' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                    <img 
-                      src={getMealImage(meal)} 
-                      alt={meal.name} 
-                      onError={(e) => { e.target.onerror = null; e.target.src = "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=600"; }}
-                      style={{ width: '100%', height: '220px', objectFit: 'cover', borderBottom: '1px solid var(--border-default)', backgroundColor: 'var(--bg-subtle)' }} 
-                    />
-                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--celeste-primary)', letterSpacing: '0.1em' }}>{meal.name}</div>
-                      <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--color-title)', lineHeight: '1.6' }}>{meal.food}</div>
-                    </div>
+                  <div key={index} style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', padding: '20px', backgroundColor: 'var(--bg-app)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', color: 'var(--celeste-primary)', letterSpacing: '0.1em' }}>{meal.name}</div>
+                    <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--color-title)', lineHeight: '1.6' }}>{meal.food}</div>
                   </div>
                 );
               })
