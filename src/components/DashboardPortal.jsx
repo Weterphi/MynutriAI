@@ -783,22 +783,20 @@ export default function DashboardPortal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
             {getActiveMeals().length > 0 ? (
               getActiveMeals().map((meal, index) => {
-                const getMealImage = (mealName, idx) => {
-                  const name = mealName.toLowerCase();
-                  if (name.includes('colazione')) return "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=600"; // Pancakes/Frutta
-                  if (name.includes('spuntino') || name.includes('merenda')) {
-                    return idx % 2 === 0 
-                      ? "https://images.pexels.com/photos/1092730/pexels-photo-1092730.jpeg?auto=compress&cs=tinysrgb&w=600" // Ciotola di frutta
-                      : "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=600"; // Cibo salutare flatlay
-                  }
-                  if (name.includes('pranzo')) return "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=600"; // Insalatona sana
-                  if (name.includes('cena')) return "https://images.pexels.com/photos/262959/pexels-photo-262959.jpeg?auto=compress&cs=tinysrgb&w=600"; // Piatto di pesce/salmone
-                  return "https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=600"; // Fallback piatto generico
+                const getMealImage = (meal, idx) => {
+                  // Creiamo un prompt testuale unendo il nome della ricetta in italiano 
+                  // a delle parole chiave in inglese per forzare un'estetica da "food photography"
+                  const promptText = `${meal.food}, high quality delicious healthy diet meal on a beautiful plate, professional food photography, 4k`;
+                  const prompt = encodeURIComponent(promptText);
+                  
+                  // Pollinations AI genera un'immagine in tempo reale (gratis e senza API key)
+                  // basata esattamente sul testo del nostro pasto!
+                  return `https://image.pollinations.ai/prompt/${prompt}?width=600&height=300&nologo=true`;
                 };
 
                 return (
                   <div key={index} style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', backgroundColor: 'var(--bg-app)', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', transition: 'transform 0.2s ease' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                    <img src={getMealImage(meal.name, index)} alt={meal.name} style={{ width: '100%', height: '160px', objectFit: 'cover', borderBottom: '1px solid var(--border-default)' }} />
+                    <img src={getMealImage(meal, index)} alt={meal.name} style={{ width: '100%', height: '160px', objectFit: 'cover', borderBottom: '1px solid var(--border-default)', backgroundColor: 'var(--bg-subtle)' }} />
                     <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <div style={{ fontSize: '13px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--celeste-primary)', letterSpacing: '0.1em' }}>{meal.name}</div>
                       <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--color-title)', lineHeight: '1.6' }}>{meal.food}</div>
