@@ -50,8 +50,10 @@ export default function SupermarketAuthModal({ marketId, onClose, onSuccess }) {
     if (market.includes('carrefour')) return 'https://www.carrefour.it/registrazione';
     if (market.includes('todis')) return 'https://www.todisacasa.it/registrazione';
     if (market.includes('coop')) return 'https://www.coopshop.it/registrazione';
+    if (market.includes('tigre') || market.includes('oasi')) return 'https://www.oasitigre.it/it/registration.html';
+    if (market.includes('esselunga')) return 'https://www.esselunga.it/area-utenti/registrazione';
     
-    // Invece di '#' (che ricarica la pagina), manda l'utente su Google a cercare la pagina di registrazione
+    // Fallback generico per supermercati non ancora mappati
     return `https://www.google.com/search?q=registrazione+spesa+online+${encodeURIComponent(marketId)}`;
   };
 
