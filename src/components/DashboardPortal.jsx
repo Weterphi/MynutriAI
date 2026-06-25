@@ -8,6 +8,7 @@ import AILoadingOverlay from './AILoadingOverlay';
 import NutriChat from './NutriChat';
 import SpesaMapSection from './SpesaMapSection';
 import SupermarketAuthModal from './SupermarketAuthModal';
+import ShoppingProgress from './ShoppingProgress';
 import { generateAndShareShoppingListPdf } from '../lib/pdfShoppingList';
 
 export default function DashboardPortal({ 
@@ -66,6 +67,7 @@ export default function DashboardPortal({
   const [isSyncingCart, setIsSyncingCart] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [selectedMarketToAuth, setSelectedMarketToAuth] = useState(null);
+  const [activeShoppingJob, setActiveShoppingJob] = useState(null);
 
   useEffect(() => {
     if (cachedUserData?.id) {
@@ -1074,11 +1076,13 @@ export default function DashboardPortal({
                       const data = await res.json();
                       if (!data.success) throw new Error(data.error);
 
-                      alert(`🛒 Job Creato in coda [${data.jobId}]! L'Agent AI prenderà in carico la richiesta per riempire il carrello su ${marketId}.`);
+                      setActiveShoppingJob({ jobId: data.jobId, marketId });
                       setShoppingList(null);
                     } catch (err) {
                       console.error("Errore creazione job:", err);
                       alert("Errore di connessione al motore AI: " + err.message);
+                    } finally {
+                      setIsSyncingCart(false);
                     }
                   };
 
@@ -1166,6 +1170,18 @@ export default function DashboardPortal({
         userPrefs={cachedUserPrefs} 
       />
 
+      {activeShoppingJob && (
+        <ShoppingProgress 
+          jobId={activeShoppingJob.jobId} 
+          marketId={activeShoppingJob.marketId}
+          onComplete={(finalStatus) => {
+             if (finalStatus === 'failed') {
+               setTimeout(() => setActiveShoppingJob(null), 5000);
+             }
+          }} 
+        />
+      )}
+
       {isAuthModalOpen && (
         <SupermarketAuthModal 
           marketId={selectedMarketToAuth} 
@@ -1186,7 +1202,7 @@ export default function DashboardPortal({
                 });
                 const data = await res.json();
                 if (data.success) {
-                  alert(`💡 Credenziali collegate! Il sistema AI sta riempiendo il tuo carrello in background su ${selectedMarketToAuth}. Job ID: ${data.jobId}`);
+                  setActiveShoppingJob({ jobId: data.jobId, marketId: selectedMarketToAuth });
                   setShoppingList(null);
                 }
               }
