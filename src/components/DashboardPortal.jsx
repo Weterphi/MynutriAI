@@ -7,6 +7,7 @@ import CartDrawer from './CartDrawer';
 import AILoadingOverlay from './AILoadingOverlay';
 import NutriChat from './NutriChat';
 import SpesaMapSection from './SpesaMapSection';
+import SupermarketAuthModal from './SupermarketAuthModal';
 import { generateAndShareShoppingListPdf } from '../lib/pdfShoppingList';
 
 export default function DashboardPortal({ 
@@ -63,6 +64,8 @@ export default function DashboardPortal({
   const [shoppingList, setShoppingList] = useState(null);
   const [hasSavedSpesa, setHasSavedSpesa] = useState(false);
   const [isSyncingCart, setIsSyncingCart] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [selectedMarketToAuth, setSelectedMarketToAuth] = useState(null);
 
   useEffect(() => {
     if (cachedUserData?.id) {
@@ -1043,17 +1046,41 @@ export default function DashboardPortal({
               <SpesaMapSection 
                 cap={cachedUserData?.user_metadata?.cap || spesaForm.cap} 
                 address={cachedUserData?.user_metadata?.address || spesaForm.address}
-                onSelectSupermarket={(market) => {
-                  setIsSyncingCart(true);
+                onSelectSupermarket={async (market) => {
                   const marketName = market.name || market;
-                  setTimeout(() => {
+                  setIsSyncingCart(true);
+
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+                    
+                    if (token) {
+                      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-supermarket-auth`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ marketId: marketName })
+                      });
+                      
+                      const data = await res.json();
+                      
+                      if (data.hasCredentials) {
+                        // Credenziali già salvate -> inizia a riempire il carrello
+                        alert(`💡 Credenziali OK. Avvio AI Cart Filling per ${marketName}...`);
+                        // logica startCartFilling(marketName) in futuro
+                      } else {
+                        // Credenziali mancanti -> apri modale
+                        setSelectedMarketToAuth(marketName);
+                        setIsAuthModalOpen(true);
+                      }
+                    }
+                  } catch (err) {
+                    console.error("Errore check auth supermercato:", err);
+                  } finally {
                     setIsSyncingCart(false);
-                    const searchUrl = marketName.includes('Amazon') 
-                      ? 'https://www.amazon.it/fmc/m/300030560' // Link diretto ad Amazon Fresh
-                      : `https://www.google.com/search?q=${encodeURIComponent(marketName + " spesa online")}`;
-                    window.open(searchUrl, '_blank');
-                    alert(`💡 DEMO MODE: L'integrazione automatica del carrello B2B con ${marketName} sarà attiva nella versione Enterprise. Per ora sei stato reindirizzato al loro sito web ufficiale.`);
-                  }, 2500);
+                  }
                 }}
               />
 
@@ -1109,6 +1136,21 @@ export default function DashboardPortal({
         userName={cachedUserData?.first_name} 
         userPrefs={cachedUserPrefs} 
       />
+
+      {isAuthModalOpen && (
+        <SupermarketAuthModal 
+          marketId={selectedMarketToAuth} 
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={() => {
+            setIsAuthModalOpen(false);
+            setIsSyncingCart(true);
+            setTimeout(() => {
+              setIsSyncingCart(false);
+              alert(`💡 DEMO MODE: Credenziali collegate! Il sistema AI sta riempiendo il tuo carrello in background su ${selectedMarketToAuth}. Questa operazione sarà trasparente per l'utente finale.`);
+            }, 3000);
+          }}
+        />
+      )}
     </div>
   );
 }
