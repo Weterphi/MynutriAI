@@ -52,6 +52,7 @@ export default function SupermarketAuthModal({ marketId, onClose, onSuccess }) {
     if (market.includes('coop')) return 'https://www.coopshop.it/registrazione';
     if (market.includes('tigre') || market.includes('oasi')) return 'https://www.oasitigre.it/it/registration.html';
     if (market.includes('esselunga')) return 'https://www.esselunga.it/area-utenti/registrazione';
+    if (market.includes('md')) return 'https://webstore.mdspa.it/registrazione';
     
     // Fallback generico per supermercati non ancora mappati
     return `https://www.google.com/search?q=registrazione+spesa+online+${encodeURIComponent(marketId)}`;
