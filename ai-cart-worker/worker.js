@@ -4,6 +4,8 @@ import stealth from 'puppeteer-extra-plugin-stealth';
 import crypto from 'node:crypto';
 import dotenv from 'dotenv';
 import { handleAmazonFresh } from './amazonFresh.js';
+import { handleConad } from './conad.js';
+import { handleCoop } from './coop.js';
 
 dotenv.config();
 chromium.use(stealth());
@@ -64,11 +66,19 @@ async function processJob(job) {
     const page = await context.newPage();
 
     try {
-        if (job.market_id.toLowerCase().includes('amazon')) {
+        const market = job.market_id.toLowerCase();
+        
+        if (market.includes('amazon')) {
             await handleAmazonFresh(page, creds.email, plainPassword, job.parsed_items);
+        } else if (market.includes('conad')) {
+            await handleConad(page, creds.email, plainPassword, job.parsed_items);
+        } else if (market.includes('coop')) {
+            await handleCoop(page, creds.email, plainPassword, job.parsed_items);
+        } else if (market.includes('tigre') || market.includes('oasi')) {
+            console.log(`-> 🚧 Lo script per ${job.market_id} è in fase di sviluppo. Eseguo simulazione...`);
+            await page.waitForTimeout(3000); 
         } else {
             console.log(`-> 🤖 Simulazione navigazione generica su ${job.market_id}...`);
-            console.log(`-> 📝 Lettura array di ${job.parsed_items.length} prodotti...`);
             await page.waitForTimeout(3000); 
             console.log("-> ✅ Carrello riempito con successo!");
         }
