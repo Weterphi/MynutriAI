@@ -3,28 +3,31 @@ export async function handleMd(page, email, plainPassword, items) {
     const missing = [];
 
     try {
-        await page.goto('https://webstore.mdspa.it/', { waitUntil: 'domcontentloaded' });
-        
-        // Accetta cookie se presenti
-        const cookieBtn = page.locator('button:has-text("Accetta"), button:has-text("Accept"), #CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
-        if (await cookieBtn.count() > 0) {
-            await cookieBtn.first().click();
-            await page.waitForTimeout(1000);
-        }
-
-        // Vai direttamente alla pagina di login per evitare problemi con i bottoni nascosti
+        // Vai direttamente alla pagina di login
         await page.goto('https://webstore.mdspa.it/login', { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(3000); // Attendi rendering iniziale
+        
+        // Accetta cookie se presenti sulla pagina di login
+        try {
+            const cookieBtn = page.locator('button:has-text("Accetta"), button:has-text("Accept"), button:has-text("ACCETTA"), #CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll').first();
+            await cookieBtn.waitFor({ state: 'visible', timeout: 5000 });
+            await cookieBtn.click({ force: true });
+            await page.waitForTimeout(1000);
+            console.log("-> 🍪 Cookie accettati");
+        } catch(e) {
+            console.log("-> 🍪 Nessun banner cookie rilevato o già chiuso");
+        }
 
         // Effettua il login
         await page.fill('input[type="email"], input[name="email"], input[name="username"]', email);
         await page.fill('input[type="password"], input[name="password"]', plainPassword);
         
         const submitLoginBtn = page.locator('button[type="submit"], button:has-text("Accedi"), button:has-text("Login")').first();
-        await submitLoginBtn.click();
+        await submitLoginBtn.click({ force: true });
         
-        await page.waitForNavigation({ waitUntil: 'networkidle' }).catch(() => console.log('Timeout attesa navigazione login'));
-        console.log("-> ✅ Login su MD completato");
+        // Su MD il login potrebbe non ricaricare l'intera pagina (AJAX), quindi aspettiamo semplicemente 5 secondi
+        await page.waitForTimeout(5000);
+        console.log("-> ✅ Login su MD tentato, procedo alla ricerca");
 
         // Loop sui prodotti
         for (const item of items) {
@@ -33,7 +36,9 @@ export async function handleMd(page, email, plainPassword, items) {
             console.log(`-> 🛒 Cerco: ${nomeProdotto} (x${quantita})`);
 
             // Usa la barra di ricerca
-            const searchInput = page.locator('input[type="search"], input[name="q"], input[placeholder*="Cerca"]').first();
+            const searchInput = page.locator('input[type="search"], input[name="q"], input[id*="search"], input[placeholder*="cerca" i]').first();
+            // Assicuriamoci che la barra sia pronta
+            await searchInput.waitFor({ state: 'visible', timeout: 10000 });
             await searchInput.fill(nomeProdotto);
             await searchInput.press('Enter');
             
