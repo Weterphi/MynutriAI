@@ -1050,21 +1050,60 @@ export default function DashboardPortal({
                   const marketName = market.name || market;
                   setIsSyncingCart(true);
 
-                  try {
-                    // MOCK DEL BACKEND: dato che le Edge Functions non sono ancora 
-                    // state deployate sul cloud (causando errore CORS/404),
-                    // simuliamo la risposta del backend per permetterti di testare l'UI.
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    const data = { hasCredentials: false }; // Forza l'apertura del modal
+                  const startCartFilling = async (marketId) => {
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      const token = session?.access_token;
+                      if (!token) throw new Error("Non autenticato");
+
+                      const parsedItems = Object.values(shoppingList || {}).flat();
+                      if (parsedItems.length === 0) {
+                        alert("La lista della spesa è vuota.");
+                        return;
+                      }
+
+                      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-shopping-job`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ marketId, parsedItems })
+                      });
                       
-                    if (data.hasCredentials) {
-                      // Credenziali già salvate -> inizia a riempire il carrello
-                      alert(`💡 Credenziali OK. Avvio AI Cart Filling per ${marketName}...`);
-                      // logica startCartFilling(marketName) in futuro
-                    } else {
-                      // Credenziali mancanti -> apri modale
-                      setSelectedMarketToAuth(marketName);
-                      setIsAuthModalOpen(true);
+                      const data = await res.json();
+                      if (!data.success) throw new Error(data.error);
+
+                      alert(`🛒 Job Creato in coda [${data.jobId}]! L'Agent AI prenderà in carico la richiesta per riempire il carrello su ${marketId}.`);
+                      setShoppingList(null);
+                    } catch (err) {
+                      console.error("Errore creazione job:", err);
+                      alert("Errore di connessione al motore AI: " + err.message);
+                    }
+                  };
+
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const token = session?.access_token;
+                    
+                    if (token) {
+                      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-supermarket-auth`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ marketId: marketName })
+                      });
+                      
+                      const data = await res.json();
+                      
+                      if (data.hasCredentials) {
+                        await startCartFilling(marketName);
+                      } else {
+                        setSelectedMarketToAuth(marketName);
+                        setIsAuthModalOpen(true);
+                      }
                     }
                   } catch (err) {
                     console.error("Errore check auth supermercato:", err);
@@ -1131,13 +1170,31 @@ export default function DashboardPortal({
         <SupermarketAuthModal 
           marketId={selectedMarketToAuth} 
           onClose={() => setIsAuthModalOpen(false)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setIsAuthModalOpen(false);
             setIsSyncingCart(true);
-            setTimeout(() => {
+            
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              const token = session?.access_token;
+              if (token) {
+                const parsedItems = Object.values(shoppingList || {}).flat();
+                const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-shopping-job`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                  body: JSON.stringify({ marketId: selectedMarketToAuth, parsedItems })
+                });
+                const data = await res.json();
+                if (data.success) {
+                  alert(`💡 Credenziali collegate! Il sistema AI sta riempiendo il tuo carrello in background su ${selectedMarketToAuth}. Job ID: ${data.jobId}`);
+                  setShoppingList(null);
+                }
+              }
+            } catch (err) {
+              console.error(err);
+            } finally {
               setIsSyncingCart(false);
-              alert(`💡 DEMO MODE: Credenziali collegate! Il sistema AI sta riempiendo il tuo carrello in background su ${selectedMarketToAuth}. Questa operazione sarà trasparente per l'utente finale.`);
-            }, 3000);
+            }
           }}
         />
       )}
