@@ -48,7 +48,11 @@ export default function SupermarketAuthModal({ marketId, onClose, onSuccess }) {
     if (market.includes('amazon')) return 'https://www.amazon.it/register';
     if (market.includes('conad')) return 'https://www.conad.it/registrazione';
     if (market.includes('carrefour')) return 'https://www.carrefour.it/registrazione';
-    return '#';
+    if (market.includes('todis')) return 'https://www.todisacasa.it/registrazione';
+    if (market.includes('coop')) return 'https://www.coopshop.it/registrazione';
+    
+    // Invece di '#' (che ricarica la pagina), manda l'utente su Google a cercare la pagina di registrazione
+    return `https://www.google.com/search?q=registrazione+spesa+online+${encodeURIComponent(marketId)}`;
   };
 
   return (
