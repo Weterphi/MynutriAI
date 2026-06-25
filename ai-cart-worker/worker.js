@@ -3,6 +3,7 @@ import { chromium } from 'playwright-extra';
 import stealth from 'puppeteer-extra-plugin-stealth';
 import crypto from 'node:crypto';
 import dotenv from 'dotenv';
+import { handleAmazonFresh } from './amazonFresh.js';
 
 dotenv.config();
 chromium.use(stealth());
@@ -56,23 +57,21 @@ async function processJob(job) {
     const plainPassword = decryptPassword(creds.encrypted_password, creds.iv, creds.auth_tag);
     console.log(`-> ✅ Password decriptata con successo per l'email: ${creds.email}`);
 
-    // 2. Avvio Browser Headless con Stealth Plugin
+    // 2. Avvio Browser (headless: false per il debug, come richiesto)
     console.log("-> 🌐 Avvio motore Playwright (Stealth Mode)...");
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ headless: false });
     const context = await browser.newContext();
     const page = await context.newPage();
 
     try {
-        // --- QUI ANDRA' LA LOGICA SPECIFICA PER OGNI SUPERMERCATO ---
-        // Esempio: if (job.market_id === 'amazon_fresh') { ... }
-        
-        console.log(`-> 🤖 Simulazione navigazione su ${job.market_id}...`);
-        console.log(`-> 📝 Lettura array di ${job.parsed_items.length} prodotti...`);
-        
-        // Simulazione tempo di esecuzione di inserimento carrello
-        await page.waitForTimeout(3000); 
-        
-        console.log("-> ✅ Carrello riempito con successo!");
+        if (job.market_id.toLowerCase().includes('amazon')) {
+            await handleAmazonFresh(page, creds.email, plainPassword, job.parsed_items);
+        } else {
+            console.log(`-> 🤖 Simulazione navigazione generica su ${job.market_id}...`);
+            console.log(`-> 📝 Lettura array di ${job.parsed_items.length} prodotti...`);
+            await page.waitForTimeout(3000); 
+            console.log("-> ✅ Carrello riempito con successo!");
+        }
         
         // 3. Lavoro completato
         await supabase.from('shopping_jobs').update({ status: 'completed', updated_at: new Date() }).eq('id', job.id);
