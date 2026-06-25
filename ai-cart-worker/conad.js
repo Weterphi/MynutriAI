@@ -1,5 +1,6 @@
 export async function handleConad(page, email, plainPassword, items) {
     console.log("Inizio automazione su Conad...");
+    const missing = [];
 
     try {
         await page.goto('https://spesaonline.conad.it/', { waitUntil: 'domcontentloaded' });
@@ -38,17 +39,20 @@ export async function handleConad(page, email, plainPassword, items) {
             // Trova primo bottone Aggiungi
             const addBtn = page.locator('button:has-text("Aggiungi"), .add-to-cart, [aria-label*="Aggiungi"]').first();
             
-            if (await addBtn.isVisible()) {
+            try {
+                await addBtn.waitFor({ state: 'visible', timeout: 5000 });
                 for (let i = 0; i < quantita; i++) {
                     await addBtn.click();
                     await page.waitForTimeout(1000);
                 }
-            } else {
+            } catch (e) {
                 console.warn(`[!] Prodotto non trovato: ${nomeProdotto}`);
+                missing.push(item);
             }
         }
         
         console.log("Carrello Conad riempito con successo.");
+        return missing;
     } catch (error) {
         console.error("Errore critico su Conad:", error);
         throw error;

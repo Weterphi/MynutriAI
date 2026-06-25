@@ -59,21 +59,22 @@ async function processJob(job) {
     const plainPassword = decryptPassword(creds.encrypted_password, creds.iv, creds.auth_tag);
     console.log(`-> ✅ Password decriptata con successo per l'email: ${creds.email}`);
 
-    // 2. Avvio Browser (headless: false per il debug, come richiesto)
+    // 2. Avvio Browser (headless: true per deploy su Docker)
     console.log("-> 🌐 Avvio motore Playwright (Stealth Mode)...");
-    const browser = await chromium.launch({ headless: false });
+    const browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
 
     try {
         const market = job.market_id.toLowerCase();
+        let missingItems = [];
         
         if (market.includes('amazon')) {
-            await handleAmazonFresh(page, creds.email, plainPassword, job.parsed_items);
+            missingItems = await handleAmazonFresh(page, creds.email, plainPassword, job.parsed_items);
         } else if (market.includes('conad')) {
-            await handleConad(page, creds.email, plainPassword, job.parsed_items);
+            missingItems = await handleConad(page, creds.email, plainPassword, job.parsed_items);
         } else if (market.includes('coop')) {
-            await handleCoop(page, creds.email, plainPassword, job.parsed_items);
+            missingItems = await handleCoop(page, creds.email, plainPassword, job.parsed_items);
         } else if (market.includes('tigre') || market.includes('oasi')) {
             console.log(`-> 🚧 Lo script per ${job.market_id} è in fase di sviluppo. Eseguo simulazione...`);
             await page.waitForTimeout(3000); 
@@ -84,7 +85,11 @@ async function processJob(job) {
         }
         
         // 3. Lavoro completato
-        await supabase.from('shopping_jobs').update({ status: 'completed', updated_at: new Date() }).eq('id', job.id);
+        await supabase.from('shopping_jobs').update({ 
+            status: 'completed', 
+            missing_items: missingItems,
+            updated_at: new Date() 
+        }).eq('id', job.id);
         console.log(`[✅ COMPLETATO] Job ${job.id} terminato con successo.\n`);
     } catch (err) {
         console.error(`[❌ ERRORE] nel job ${job.id}:`, err);

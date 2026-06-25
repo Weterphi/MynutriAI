@@ -1,5 +1,6 @@
 export async function handleAmazonFresh(page, email, plainPassword, items) {
     console.log("Inizio automazione su Amazon Fresh...");
+    const missing = [];
 
     try {
         // 1. Navigazione iniziale e Login
@@ -38,23 +39,23 @@ export async function handleAmazonFresh(page, email, plainPassword, items) {
             await page.waitForSelector('.s-main-slot', { timeout: 5000 });
 
             // Trova il primo pulsante "Aggiungi al carrello" utile nei risultati Fresh
-            // NOTA: I selettori di Amazon sono complessi, usa locator testuali o ID stabili
             const addToCartBtn = page.locator('button:has-text("Aggiungi al carrello")').first();
             
-            if (await addToCartBtn.isVisible()) {
-                // Clicca per il numero di quantità richieste
+            try {
+                // Attendi massimo 5 secondi per vedere se il prodotto è disponibile
+                await addToCartBtn.waitFor({ state: 'visible', timeout: 5000 });
                 for (let i = 0; i < quantita; i++) {
                     await addToCartBtn.click();
-                    // Breve delay per far aggiornare il contatore del carrello ed evitare blocchi
                     await page.waitForTimeout(800); 
                 }
-            } else {
+            } catch (e) {
                 console.warn(`[!] Prodotto non trovato o esaurito: ${nomeProdotto}`);
-                // In futuro qui salveremo in un array "outOfStock" per notificare l'utente
+                missing.push(item);
             }
         }
 
         console.log("Carrello Amazon Fresh riempito con successo.");
+        return missing;
 
     } catch (error) {
         console.error("Errore critico durante la navigazione:", error);

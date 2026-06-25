@@ -1,5 +1,6 @@
 export async function handleCoop(page, email, plainPassword, items) {
     console.log("Inizio automazione su Coop...");
+    const missing = [];
 
     try {
         await page.goto('https://www.coopshop.it/', { waitUntil: 'domcontentloaded' });
@@ -35,17 +36,20 @@ export async function handleCoop(page, email, plainPassword, items) {
 
             const addBtn = page.locator('button:has-text("Aggiungi"), .add-to-cart-btn').first();
             
-            if (await addBtn.isVisible()) {
+            try {
+                await addBtn.waitFor({ state: 'visible', timeout: 5000 });
                 for (let i = 0; i < quantita; i++) {
                     await addBtn.click();
                     await page.waitForTimeout(1000);
                 }
-            } else {
+            } catch (e) {
                 console.warn(`[!] Prodotto non trovato: ${nomeProdotto}`);
+                missing.push(item);
             }
         }
         
         console.log("Carrello Coop riempito con successo.");
+        return missing;
     } catch (error) {
         console.error("Errore critico su Coop:", error);
         throw error;

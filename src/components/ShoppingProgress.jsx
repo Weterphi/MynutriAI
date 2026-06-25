@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 const ShoppingProgress = ({ jobId, marketId, onComplete }) => {
   const [status, setStatus] = useState('pending');
   const [fade, setFade] = useState('fade-in');
+  const [missingItems, setMissingItems] = useState([]);
 
   useEffect(() => {
     if (!jobId) return;
@@ -27,6 +28,9 @@ const ShoppingProgress = ({ jobId, marketId, onComplete }) => {
             setFade('fade-out');
             setTimeout(() => {
               setStatus(newStatus);
+              if (payload.new.missing_items && Array.isArray(payload.new.missing_items)) {
+                  setMissingItems(payload.new.missing_items);
+              }
               setFade('fade-in');
             }, 300);
           }
@@ -43,12 +47,15 @@ const ShoppingProgress = ({ jobId, marketId, onComplete }) => {
 
     // Polling di sicurezza (fallback nel caso WebSocket fallisca/disconnetta)
     const interval = setInterval(async () => {
-        const { data } = await supabase.from('shopping_jobs').select('status').eq('id', jobId).single();
+        const { data } = await supabase.from('shopping_jobs').select('status, missing_items').eq('id', jobId).single();
         if (data && data.status !== status) {
             const newStatus = data.status;
             setFade('fade-out');
             setTimeout(() => {
                 setStatus(newStatus);
+                if (data.missing_items && Array.isArray(data.missing_items)) {
+                    setMissingItems(data.missing_items);
+                }
                 setFade('fade-in');
             }, 300);
             if (newStatus === 'completed' || newStatus === 'failed') {
@@ -157,25 +164,60 @@ const ShoppingProgress = ({ jobId, marketId, onComplete }) => {
       </div>
 
       {status === 'completed' && (
-          <a 
-            href={getSupermarketLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-                backgroundColor: '#D4AF37',
-                color: '#000',
-                padding: '16px 32px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
-                animation: 'fadeUp 0.5s ease',
-                display: 'inline-block'
-            }}
-          >
-              Apri il sito del supermercato per pagare
-          </a>
+          <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              animation: 'fadeUp 0.5s ease',
+              maxWidth: '500px',
+              width: '100%'
+          }}>
+              {missingItems.length > 0 && (
+                  <div style={{
+                      backgroundColor: 'rgba(26, 26, 26, 0.9)',
+                      border: '1px solid #D4AF37',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      marginBottom: '24px',
+                      width: '100%',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                  }}>
+                      <div style={{ color: '#D4AF37', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                          Articoli non trovati
+                      </div>
+                      <p style={{ fontSize: '14px', color: '#ccc', marginBottom: '12px' }}>
+                          Il tuo carrello è pronto! Tuttavia, i seguenti articoli erano esauriti e non sono stati inseriti. Puoi provare a sostituirli manualmente prima di pagare:
+                      </p>
+                      <ul style={{ margin: 0, paddingLeft: '20px', color: '#fff', fontSize: '14px' }}>
+                          {missingItems.map((item, idx) => (
+                              <li key={idx} style={{ marginBottom: '4px' }}>
+                                  {item.item || item.prodotto} ({item.quantity || item.quantita})
+                              </li>
+                          ))}
+                      </ul>
+                  </div>
+              )}
+
+              <a 
+                href={getSupermarketLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                    backgroundColor: '#D4AF37',
+                    color: '#000',
+                    padding: '16px 32px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)',
+                    display: 'inline-block'
+                }}
+              >
+                  Apri il sito del supermercato per pagare
+              </a>
+          </div>
       )}
 
       <style>
