@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { handleAmazonFresh } from './amazonFresh.js';
 import { handleConad } from './conad.js';
 import { handleCoop } from './coop.js';
+import { handleMd } from './md.js';
 
 dotenv.config();
 chromium.use(stealth());
@@ -75,6 +76,8 @@ async function processJob(job) {
             missingItems = await handleConad(page, creds.email, plainPassword, job.parsed_items);
         } else if (market.includes('coop')) {
             missingItems = await handleCoop(page, creds.email, plainPassword, job.parsed_items);
+        } else if (market.includes('md')) {
+            missingItems = await handleMd(page, creds.email, plainPassword, job.parsed_items);
         } else if (market.includes('tigre') || market.includes('oasi')) {
             console.log(`-> 🚧 Lo script per ${job.market_id} è in fase di sviluppo. Eseguo simulazione...`);
             await page.waitForTimeout(3000); 
