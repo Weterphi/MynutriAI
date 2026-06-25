@@ -12,13 +12,9 @@ export async function handleMd(page, email, plainPassword, items) {
             await page.waitForTimeout(1000);
         }
 
-        // Vai alla pagina di login o clicca sull'icona utente
-        // NOTA: il selettore esatto dipende dal DOM reale di MD
-        const loginIcon = page.locator('a[href*="login"], a:has-text("Accedi"), .login-icon').first();
-        if (await loginIcon.count() > 0) {
-            await loginIcon.click();
-            await page.waitForTimeout(2000);
-        }
+        // Vai direttamente alla pagina di login per evitare problemi con i bottoni nascosti
+        await page.goto('https://webstore.mdspa.it/login', { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(2000);
 
         // Effettua il login
         await page.fill('input[type="email"], input[name="email"], input[name="username"]', email);

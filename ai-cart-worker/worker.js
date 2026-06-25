@@ -60,11 +60,38 @@ async function processJob(job) {
     const plainPassword = decryptPassword(creds.encrypted_password, creds.iv, creds.auth_tag);
     console.log(`-> ✅ Password decriptata con successo per l'email: ${creds.email}`);
 
-    // 2. Avvio Browser (headless: true per deploy su Docker)
+    // 2. Avvio Browser (headless: false per vedere il test visivo)
     console.log("-> 🌐 Avvio motore Playwright (Stealth Mode)...");
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ headless: false });
     const context = await browser.newContext();
     const page = await context.newPage();
+
+    // 🛡️ SCUDO ANTI-ADS & OTTIMIZZAZIONE PRESTAZIONI
+    await page.route('**/*', (route) => {
+        const req = route.request();
+        const type = req.resourceType();
+        const url = req.url().toLowerCase();
+
+        // Blocca immagini pesanti, media, e font (velocizza il caricamento del 70%)
+        if (['image', 'media', 'font'].includes(type)) {
+            return route.abort();
+        }
+
+        // Blocca domini noti di tracciamento e pubblicità
+        if (
+            url.includes('google-analytics') ||
+            url.includes('doubleclick.net') ||
+            url.includes('facebook.com/tr/') ||
+            url.includes('criteo.com') ||
+            url.includes('hotjar.com') ||
+            url.includes('outbrain.com') ||
+            url.includes('taboola.com')
+        ) {
+            return route.abort();
+        }
+
+        route.continue();
+    });
 
     try {
         const market = job.market_id.toLowerCase();
