@@ -25,7 +25,8 @@ export default function SpesaMapSection({ cap, address, onSelectSupermarket }) {
           throw new Error("Impossibile trovare le coordinate per questo indirizzo.");
         }
 
-        const { lat, lon } = geocodeData[0];
+        const lat = parseFloat(geocodeData[0].lat);
+        const lon = parseFloat(geocodeData[0].lon);
         setLocation({ lat, lon });
 
         // 2. Cerca supermercati nel raggio di 5km tramite Overpass API

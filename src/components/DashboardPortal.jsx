@@ -1051,30 +1051,20 @@ export default function DashboardPortal({
                   setIsSyncingCart(true);
 
                   try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const token = session?.access_token;
-                    
-                    if (token) {
-                      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-supermarket-auth`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ marketId: marketName })
-                      });
+                    // MOCK DEL BACKEND: dato che le Edge Functions non sono ancora 
+                    // state deployate sul cloud (causando errore CORS/404),
+                    // simuliamo la risposta del backend per permetterti di testare l'UI.
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    const data = { hasCredentials: false }; // Forza l'apertura del modal
                       
-                      const data = await res.json();
-                      
-                      if (data.hasCredentials) {
-                        // Credenziali già salvate -> inizia a riempire il carrello
-                        alert(`💡 Credenziali OK. Avvio AI Cart Filling per ${marketName}...`);
-                        // logica startCartFilling(marketName) in futuro
-                      } else {
-                        // Credenziali mancanti -> apri modale
-                        setSelectedMarketToAuth(marketName);
-                        setIsAuthModalOpen(true);
-                      }
+                    if (data.hasCredentials) {
+                      // Credenziali già salvate -> inizia a riempire il carrello
+                      alert(`💡 Credenziali OK. Avvio AI Cart Filling per ${marketName}...`);
+                      // logica startCartFilling(marketName) in futuro
+                    } else {
+                      // Credenziali mancanti -> apri modale
+                      setSelectedMarketToAuth(marketName);
+                      setIsAuthModalOpen(true);
                     }
                   } catch (err) {
                     console.error("Errore check auth supermercato:", err);
